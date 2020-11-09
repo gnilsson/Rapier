@@ -1,0 +1,40 @@
+﻿using AutoMapper;
+using MediatR;
+using Rapier.External.Models;
+using Rapier.Internal.Repositories;
+using Rapier.Internal.Utility;
+using Rapier.QueryDefinitions;
+using Rapier.Services;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Rapier.External.Handlers
+{
+    public class GetHandler<TEntity, TRequest, TResponse> :
+        IRequestHandler<TRequest, PagedResponse<TResponse>>
+        where TEntity : Entity
+        where TRequest : QueryReciever, IRequest<PagedResponse<TResponse>>
+    {
+        private readonly IRepository<TEntity, TResponse> _repository;
+        private readonly IMapper _mapper;
+        private readonly IUriService _uriService;
+        //  private readonly ILogger _logger;
+
+        public GetHandler(
+            IRepositoryWrapper repositoryWrapper,
+            IMapper mapper,
+            IUriService uriService) =>
+            (_repository, _mapper, _uriService) =
+            (repositoryWrapper.Get<TEntity, TResponse>(), mapper, uriService);
+
+        public virtual async Task<PagedResponse<TResponse>> Handle(
+            TRequest request,
+            CancellationToken cancellationToken)
+        {
+            var queryData = await _repository.GetQueriedResultAsync(request);
+            return PaginationUtility.CreatePaginatedResponse(
+                _uriService, request.PaginationQuery,
+                queryData.Items, request.RequestRoute, queryData.Total);
+        }
+    }
+}

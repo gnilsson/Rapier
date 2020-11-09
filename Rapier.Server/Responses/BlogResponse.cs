@@ -1,0 +1,13 @@
+﻿using Rapier.External.Models;
+using Rapier.Server.Enums;
+using System.Collections.Generic;
+
+namespace Rapier.Server.Responses
+{
+    public class BlogResponse : EntityResponse, IBlogResponseSimplified
+    {
+        public string Title { get; set; }
+        public IEnumerable<IPostResponseSimplified> Posts { get; set; }
+        public string BlogCategory { get; set; }
+    }
+}
