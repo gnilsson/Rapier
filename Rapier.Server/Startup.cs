@@ -33,8 +33,22 @@ namespace Rapier.Server
             {
                 opt.ContextType = typeof(RapierDbContext);
                 opt.AssemblyType = typeof(Startup);
-                var blogEndpoint = new ControllerEndpointSettings { Route = "api/blogs", Authorize = AuthorizationCategory.Default };
-    //            blogEndpoint.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod == "Get").Authorize = AuthorizationCategory.Custom;
+
+                var blogEndpoint = new ControllerEndpointSettings 
+                { 
+                    Route = "api/blogs", 
+                    AuthorizeableEndpoint = new()
+                    {
+                        Category = AuthorizationCategory.Default,
+                        Policy = "WorksForRapier"
+                    }
+
+                };
+
+                blogEndpoint.ActionSettingsCollection
+                    .FirstOrDefault(x => x.ActionMethod == "Get")
+                    .AuthorizeableEndpoint.Category = AuthorizationCategory.Custom;
+
                 opt.EndpointSettingsCollection = new Dictionary<Type, ControllerEndpointSettings>
                 {
                     { typeof(Blog), blogEndpoint },

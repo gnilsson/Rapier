@@ -1,4 +1,7 @@
-﻿using Rapier.External.Enums;
+﻿using Microsoft.AspNetCore.Authorization;
+using Rapier.External.Enums;
+using Rapier.External.Models;
+using Rapier.Internal.Utility;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +18,6 @@ namespace Rapier.Configuration.Settings
         public Type QueryConfiguration { get; set; }
         public IDictionary<string, Type> Parameters { get; set; }
         public Type Validator { get; set; }
-        public IDictionary<string, AuthorizationCategory> AuthorizeableEndpoints { get; set; }
+        public IDictionary<string, AuthorizeableEndpoint> AuthorizeableEndpoints { get; set; }
     }
 }

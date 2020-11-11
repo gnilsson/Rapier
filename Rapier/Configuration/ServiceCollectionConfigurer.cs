@@ -41,44 +41,39 @@ namespace Rapier.Configuration
                     .GetInterface(typeof(IParameter).Name) != null)
                 .Select(type => (type, type.GetCustomAttribute<QueryParameterAttribute>()));
 
+
+
             var entitySettings = new List<IEntitySettings>();
-            foreach (var entity in entityTypes)
+            foreach (var entityType in entityTypes)
             {
                 //if (config.RoutesByAttribute)
                 //{
                 //    var attRoute = responseType?.GetCustomAttribute<GeneratedControllerAttribute>()?.Route;
                 //}
-                var responseType = types.GetFirstClassChild(typeof(EntityResponse), entity.Name);
-                var commandRequest = types.GetFirstInterfaceChild(typeof(IModifyRequest), entity.Name);
-                var queryRequest = types.GetFirstClassChild(typeof(GetRequest), entity.Name);
+                var responseType = types.GetFirstClassChild(typeof(EntityResponse), entityType.Name);
+                var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
+                var queryRequestType = types.GetFirstClassChild(typeof(GetRequest), entityType.Name);
 
-                var controller = config.EndpointSettingsCollection[entity];
+                var controllerEndpoint = config.EndpointSettingsCollection[entityType];
                 var controllerType = typeof(RapierController<,,>)
                     .MakeGenericType(
                         responseType,
-                         queryRequest,
-                        commandRequest);
+                         queryRequestType,
+                        commandRequestType);
 
-                var authorizeEndpoints = new Dictionary<string, AuthorizationCategory>();
-                foreach (var action in controller.ActionSettingsCollection)
-                    authorizeEndpoints.Add(
-                        $"{controllerType.FullName}.{action.ActionMethod}", 
-                        action?.Authorize == AuthorizationCategory.None ?
-                        controller.Authorize : action.Authorize);
 
                 entitySettings.Add(new EntitySettings()
                 {
-                    EntityType = entity,
+                    EntityType = entityType,
                     ResponseType = responseType,
-                    QueryRequest =  queryRequest, // remove from types ?
-                    CommandRequest = commandRequest,
-                    QueryConfiguration = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entity.Name),
-                    ControllerRoute = controller.Route,
+                    QueryRequest =  queryRequestType,
+                    CommandRequest = commandRequestType,
+                    QueryConfiguration = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
+                    ControllerRoute = controllerEndpoint.Route,
                     ControllerName = controllerType.AssemblyQualifiedName,
-                    Parameters = GetParameters(parameters, entity.Name),
-                    Validator = GetValidator(exportedTypes, commandRequest),
-                    AuthorizeableEndpoints = authorizeEndpoints
-
+                    Parameters = GetParameters(parameters, entityType.Name),
+                    Validator = GetValidator(exportedTypes, commandRequestType),
+                    AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint,controllerType),
                 });
 
             }
@@ -107,6 +102,24 @@ namespace Rapier.Configuration
                 .AddRange(
                 (nameof(Entity.CreatedDate), typeof(CreatedDateParameter)),
                 (nameof(Entity.UpdatedDate), typeof(UpdatedDateParameter)));
+
+        private static IDictionary<string, AuthorizeableEndpoint> GetAuthorizeableEndpoints(
+            ControllerEndpointSettings controllerEndpoint,
+            Type controllerType)
+        {
+            var authorizeEndpoints = new Dictionary<string, AuthorizeableEndpoint>();
+            foreach (var actionEndpoint in controllerEndpoint.ActionSettingsCollection) 
+                authorizeEndpoints.Add(
+                    $"{controllerType.FullName}.{actionEndpoint.ActionMethod}", new()
+                    {
+                        Category = actionEndpoint?.AuthorizeableEndpoint.Category == AuthorizationCategory.None ?
+                        controllerEndpoint.AuthorizeableEndpoint.Category : actionEndpoint.AuthorizeableEndpoint.Category,
+
+                        Policy = string.IsNullOrWhiteSpace(actionEndpoint.AuthorizeableEndpoint.Policy) ?
+                        controllerEndpoint.AuthorizeableEndpoint.Policy : actionEndpoint.AuthorizeableEndpoint.Policy
+                    });
+            return authorizeEndpoints;
+        }
 
         public static void AddUriService(this IServiceCollection services)
         {

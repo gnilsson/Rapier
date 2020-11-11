@@ -35,17 +35,16 @@ namespace Rapier.Configuration
                 o.Conventions.Add(new GenericControllerRouteConvention(config));
             }).ConfigureApplicationPartManager(m => m.FeatureProviders
                 .Add(new GenericTypeControllerFeatureProvider(config)))
-                .AddJsonOptions(o =>
-                {
-                    o.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-                    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                });
+            .AddJsonOptions(o =>
+            {
+                o.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            });
 
             services.AddSingleton(config);
         }
         public static void AddRapier(this IServiceCollection services)
         {
-            services.BuildServiceProvider();
             var provider = services.BuildServiceProvider();
 
             var config = provider.GetRequiredService<RapierConfigurationOptions>();
@@ -137,11 +136,11 @@ namespace Rapier.Configuration
             services.AddScoped(x =>
             {
                 var context = x.GetRequiredService(config.ContextType);
-                var type = context.GetType();
+                var contextType = context.GetType();
                 var wrapperCtor = typeof(RepositoryWrapper<>)
-                .MakeGenericType(type)
+                .MakeGenericType(contextType)
                 .GetConstructor(new[] {
-                    type,
+                    contextType,
                     typeof(IMapper),
                     typeof(IReadOnlyDictionary<string,
                     RepositoryConstructContainer>)});

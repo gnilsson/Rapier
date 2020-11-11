@@ -1,14 +1,17 @@
 ﻿using Rapier.External.Enums;
+using Rapier.External.Models;
+using System;
 
 namespace Rapier.Configuration.Settings
 {
     public class ActionEndpointSettings
     {
         public string ActionMethod { get; }
-        public AuthorizationCategory Authorize { get; set; } = 0;
+        public AuthorizeableEndpoint AuthorizeableEndpoint { get; set; }
         public ActionEndpointSettings(string actionMethod)
         {
             ActionMethod = actionMethod;
+            AuthorizeableEndpoint = new();
         }
     }
 }
