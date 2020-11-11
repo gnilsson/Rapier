@@ -1,11 +1,10 @@
-﻿using Rapier.QueryDefinitions.Parameters;
+﻿using Rapier.External.Enums;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 
-namespace Rapier.Configuration
+namespace Rapier.Configuration.Settings
 {
-    public interface IEntitySetting
+    public interface IEntitySettings
     {
         public Type EntityType { get; set; }
         public Type ResponseType { get; set; }
@@ -14,7 +13,8 @@ namespace Rapier.Configuration
         public Type QueryRequest { get; set; }
         public Type CommandRequest { get; set; }
         public Type QueryConfiguration { get; set; }
-        public IDictionary<string,Type> Parameters { get; set; }
+        public IDictionary<string, Type> Parameters { get; set; }
         public Type Validator { get; set; }
+        public IDictionary<string, AuthorizationCategory> AuthorizeableEndpoints { get; set; }
     }
 }

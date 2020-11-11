@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rapier.Configuration.Settings;
+using System;
 using System.Collections.Generic;
 
 namespace Rapier.Configuration
@@ -7,12 +8,12 @@ namespace Rapier.Configuration
     {
         public Type AssemblyType { get; set; }
         public Type ContextType { get; set; }
-        public IEnumerable<IEntitySetting> EntitySettings { get; set; }
-        public IDictionary<Type, string> Routes { get; set; }
+        public IEnumerable<IEntitySettings> EntitySettingsCollection { get; set; }
+        public IDictionary<Type, ControllerEndpointSettings> EndpointSettingsCollection { get; set; }
         public bool GeneratedControllers { get; set; } = true;
         public bool InterfaceDiscovery { get; set; } = true;
         public bool RoutesByAttribute { get; set; } = false;
         public Type ExtendedRepository { get; set; }
-        public Type[] ValidationTest { get; set; }
+        public PaginationSettings PaginationSettings { get; set; }
     }
 }

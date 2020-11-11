@@ -9,26 +9,32 @@ namespace Rapier.Internal.Utility
     public static class CommonUtility
     {
         public static IDictionary<TKey, TValue> AddRange<TKey, TValue>(
-            this Dictionary<TKey, TValue> current,
+            this IDictionary<TKey, TValue> current,
             IDictionary<TKey, TValue> target)
             where TKey : notnull
         {
             foreach (var value in target)
-            {
                 current.Add(value.Key, value.Value);
-            }
             return current;
         }
 
         public static IDictionary<TKey, TValue> AddRange<TKey, TValue>(
-            this Dictionary<TKey, TValue> current,
+            this IDictionary<TKey, TValue> current,
             IEnumerable<KeyValuePair<TKey, TValue>> target)
             where TKey : notnull
         {
             foreach (var value in target)
-            {
                 current.Add(value.Key, value.Value);
-            }
+            return current;
+        }
+
+        public static IDictionary<TKey, TValue> AddRange<TKey, TValue>(
+            this IDictionary<TKey, TValue> current,
+            params (TKey, TValue)[] target)
+            where TKey : notnull
+        {
+            foreach (var value in target)
+                current.Add(value.Item1, value.Item2);
             return current;
         }
 

@@ -4,7 +4,7 @@ namespace Rapier.QueryDefinitions.Parameters
 {
     public class CreatedDateParameter : DateParameter
     {
-        public override void Set(string value)
+        public CreatedDateParameter(string value)
         {
             base.Set(value);
             TableReferenceChildren = new[] { nameof(Entity.CreatedDate) };

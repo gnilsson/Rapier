@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Rapier.External.PipelineBehaviours
 {
-    public class ValidationBehaviour<TRequest, TResponse, TCommand> :
+    internal sealed class ValidationBehaviour<TRequest, TResponse, TCommand> :
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : ICommandReciever<TCommand> , IRequest<TResponse>
         where TCommand : IModifyRequest

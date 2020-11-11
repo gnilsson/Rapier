@@ -1,14 +1,20 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Rapier.Configuration;
+using Rapier.Configuration.Settings;
+using Rapier.External.Enums;
+using Rapier.Server.Authorization;
 using Rapier.Server.Config;
 using Rapier.Server.Data;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Rapier.Server
 {
@@ -27,10 +33,12 @@ namespace Rapier.Server
             {
                 opt.ContextType = typeof(RapierDbContext);
                 opt.AssemblyType = typeof(Startup);
-                opt.Routes = new Dictionary<Type, string>
+                var blogEndpoint = new ControllerEndpointSettings { Route = "api/blogs", Authorize = AuthorizationCategory.Default };
+    //            blogEndpoint.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod == "Get").Authorize = AuthorizationCategory.Custom;
+                opt.EndpointSettingsCollection = new Dictionary<Type, ControllerEndpointSettings>
                 {
-                    { typeof(Blog), "api/blogs" },
-                    { typeof(Post), "api/posts" }
+                    { typeof(Blog), blogEndpoint },
+                    { typeof(Post), new ControllerEndpointSettings { Route="api/posts" } },
                 };
 
             });
@@ -39,6 +47,8 @@ namespace Rapier.Server
                 options.UseSqlServer(Configuration
                     .GetConnectionString("sqlConn")));
 
+            services.AddJwt(Configuration);
+            services.AddAuthorizationHandlers();
             services.AddRapier();
             services.AddSwagger();
         }
@@ -54,8 +64,9 @@ namespace Rapier.Server
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
-
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

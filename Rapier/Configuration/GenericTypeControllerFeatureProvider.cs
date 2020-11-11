@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Rapier.External;
+using Rapier.Internal.Utility;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,16 +16,15 @@ namespace Rapier.Configuration
             => _config = config;
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
-            foreach (var setting in _config.EntitySettings)
+            foreach (var setting in _config.EntitySettingsCollection)
             {
                 feature.Controllers.Add(
                     typeof(RapierController<,,>)
                     .MakeGenericType(
-                        setting.ResponseType, 
-                        setting.QueryRequest, 
+                        setting.ResponseType,
+                        setting.QueryRequest,
                         setting.CommandRequest)
-                    .GetTypeInfo()
-                );
+                    .GetTypeInfo());
             }
         }
     }

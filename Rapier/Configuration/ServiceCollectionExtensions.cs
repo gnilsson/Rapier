@@ -1,30 +1,23 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Rapier.Configuration.Settings;
 using Rapier.External;
-using Rapier.External.Handlers;
-using Rapier.External.Models;
 using Rapier.External.PipelineBehaviours;
 using Rapier.Internal;
+using Rapier.Internal.Exceptions;
 using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
-using Rapier.QueryDefinitions.Parameters;
-using Rapier.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
-using FluentValidation;
-using System.ComponentModel;
-using Rapier.Internal.Exceptions;
 
 namespace Rapier.Configuration
 {
@@ -37,10 +30,11 @@ namespace Rapier.Configuration
             if (config.InterfaceDiscovery && config.AssemblyType != null)
                 config.DiscoverInterfacesByEntityName();
 
-            services.AddControllers(o => o.Conventions
-                .Add(new GenericControllerRouteConvention(config)))
-                .ConfigureApplicationPartManager(m => m.FeatureProviders
-                    .Add(new GenericTypeControllerFeatureProvider(config)))
+            services.AddControllers(o =>
+            {
+                o.Conventions.Add(new GenericControllerRouteConvention(config));
+            }).ConfigureApplicationPartManager(m => m.FeatureProviders
+                .Add(new GenericTypeControllerFeatureProvider(config)))
                 .AddJsonOptions(o =>
                 {
                     o.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
@@ -51,9 +45,11 @@ namespace Rapier.Configuration
         }
         public static void AddRapier(this IServiceCollection services)
         {
+            services.BuildServiceProvider();
             var provider = services.BuildServiceProvider();
-            var config = provider.GetRequiredService(typeof(RapierConfigurationOptions)) as RapierConfigurationOptions;
-            var entitySettings = new EntitySettingsContainer(config.EntitySettings);
+
+            var config = provider.GetRequiredService<RapierConfigurationOptions>();
+            var entitySettings = new EntitySettingsContainer(config.EntitySettingsCollection);
 
             foreach (var handlerType in new HandlerTypesContainer())
                 services.AddScoped(handlerType[0], handlerType[1]);
@@ -94,7 +90,7 @@ namespace Rapier.Configuration
                     if (property.GetValue(entityTypes) is Type[] handler)
                         services.AddScoped(handler[0], handler[1]);
 
-                var queryConfig = entityTypes.QueryConfiguration == null ? null : 
+                var queryConfig = entityTypes.QueryConfiguration == null ? null :
                     ExpressionUtility.CreateEmptyConstructor(entityTypes.QueryConfiguration);
                 var queryManagerType = typeof(QueryManager<>).MakeGenericType(setting.EntityType);
                 var queryManagerConstructor = ExpressionUtility.CreateConstructor(
@@ -112,6 +108,7 @@ namespace Rapier.Configuration
                     setting.EntityType.Name,
                     new RepositoryConstructContainer(repositoryConstructor, queryManager));
             }
+
             var queryConfigContainer =
                 new ReadOnlyDictionary<string,
                 ExpressionUtility.EmptyConstructorDelegate>(queryConfigurations);
@@ -122,16 +119,18 @@ namespace Rapier.Configuration
             var providerItems = new RequestProviderItems
             {
                 Parameters = new ReadOnlyDictionary<string, IReadOnlyDictionary<string,
-                ExpressionUtility.ConstructorDelegate>>(fullParameters)
+                ExpressionUtility.ConstructorDelegate>>(fullParameters),
+                PaginationSettings = config.PaginationSettings ?? new PaginationSettings(),
             };
             services.AddSingleton(providerItems);
+
             services.AddHttpContextAccessor();
 
-            services.AddMediatR(typeof(RapierController<,,>));
-            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,,>));
-            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ProvideCommandBehaviour<,>));
-            //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ProvideQueryBehaviour<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ProvideCommandBehaviour<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ProvideQueryBehaviour<,>));
 
+            services.AddMediatR(typeof(RapierController<,,>));
             var mapper = new Mapping(entitySettings).ConfigureMapper();
             services.TryAddScoped(x => mapper);
 

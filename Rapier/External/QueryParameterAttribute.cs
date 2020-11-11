@@ -2,16 +2,6 @@
 
 namespace Rapier.External
 {
-
-    //[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    //public class QueryParameterAttribute : Attribute
-    //{
-    //    public QueryParameterAttribute(params string[] descriptor)
-    //        => Descriptor = descriptor;
-
-    //    public string[] Descriptor { get; set; }
-
-    //}
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class QueryParameterAttribute : Attribute
     {

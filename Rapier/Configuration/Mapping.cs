@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Rapier.Configuration.Settings;
 using Rapier.External;
 using Rapier.External.Models;
 using Rapier.Internal.Utility;

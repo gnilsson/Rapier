@@ -1,4 +1,5 @@
-﻿using Rapier.External.Models;
+﻿using Rapier.Configuration.Settings;
+using Rapier.External.Models;
 
 namespace Rapier.QueryDefinitions
 {
@@ -7,15 +8,15 @@ namespace Rapier.QueryDefinitions
         public PaginationQuery()
         { }
 
-        public PaginationQuery(IPaginateable pagination)
+        public PaginationQuery(IPaginateable pagination, PaginationSettings settings)
         {
             PageNumber =
                 pagination?.PageNumber < 1 ? _defaultPageNumber
                 : pagination.PageNumber;
 
             PageSize =
-                pagination.PageSize < 1 ? _defaultPageSize
-                : pagination.PageSize > _maxPageSize ? _maxPageSize
+                pagination.PageSize < 1 ? settings.DefaultPageSize
+                : pagination.PageSize > settings.MaxPageSize ? settings.MaxPageSize
                 : pagination.PageSize;
 
             IsApplied =
@@ -23,8 +24,6 @@ namespace Rapier.QueryDefinitions
         }
 
         private readonly int _defaultPageNumber = 1;
-        private readonly int _defaultPageSize = 20;
-        private readonly int _maxPageSize = 50;
 
         public int PageNumber { get; set; }
 

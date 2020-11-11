@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Rapier.CommandDefinitions;
+using Rapier.Configuration.Settings;
 using Rapier.External.Handlers;
 using Rapier.External.Models;
 using Rapier.External.PipelineBehaviours;
@@ -14,7 +15,7 @@ namespace Rapier.Configuration
         public Type[] CreateHandler { get; }
         public Type[] Modifier { get; }
         public Type[] Validator { get; }
-        public EntityTypes(IEntitySetting setting)
+        public EntityTypes(IEntitySettings setting)
         {
             QueryConfiguration = setting.QueryConfiguration;
 

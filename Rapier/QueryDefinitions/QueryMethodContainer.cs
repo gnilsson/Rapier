@@ -8,8 +8,6 @@ namespace Rapier.QueryDefinitions
     {
         public MethodInfo Contains { get; }
         public MethodInfo CompareTo { get; }
-        //    public ReadOnlyDictionary<string,ReadOnlyDictionary<string,MethodInfo>> QueryMethods { get; }
-
         public QueryMethodContainer()
         {
             Contains = typeof(string).GetMethod(nameof(Methods.Contains), new[] { typeof(string) });

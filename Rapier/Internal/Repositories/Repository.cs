@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Rapier.Internal.Repositories
@@ -38,7 +39,7 @@ namespace Rapier.Internal.Repositories
         private IQueryable<TEntity> SetQuery()
             => DbContext.Set<TEntity>();
         public async Task<IQueryResult<TResponse>> GetQueriedResultAsync(
-            QueryReciever queryReciever)
+            QueryReciever queryReciever, CancellationToken token)
         {
             var query = SetQuery().AsNoTracking();
             var count = await query.CountAsync();
@@ -52,61 +53,34 @@ namespace Rapier.Internal.Repositories
                 await query
                 .ApplyPaging(queryReciever.PaginationQuery)
                 .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
-                .ToListAsync());
+                .ToListAsync(token));
         }
-        //public async Task<QueryResult<Response>> GetQueriedResultAsync(
-        //             QueryReciever queryReciever)
-        //{
-        //    //var query = SetQuery().AsNoTracking();
-        //    //var count = await query.CountAsync();
-        //    //var dtos = await
-        //    //    _orderer(query
-        //    //        .ApplyPaging(queryReciever.PaginationQuery)
-        //    //        .Where(_querier(queryReciever.Parameters)),
-        //    //        queryReciever.OrderByParameter)
-        //    //    .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
-        //    //    .ToListAsync();
-        //    //return new QueryResult<TResponse>(count, dtos);
-        //    //var query = SetQuery().AsNoTracking();
-        //    //var count = await query.CountAsync();
-        //    //if (_includer != null)
-        //    //    query = query.IgnoreAutoIncludes(); //_includer(query.IgnoreAutoIncludes());
 
-        //    var query = SetQuery().AsNoTracking();
-        //    var count = await query.CountAsync();
-        //    if (_querier != null)
-        //        query = query.Where(_querier(queryReciever.Parameters));
-        //    if (_orderer != null)
-        //        query = _orderer(query, queryReciever.OrderByParameter);
-
-        //    return new QueryResult<TResponse>(
-        //        count,
-        //        await query
-        //        .ApplyPaging(queryReciever.PaginationQuery)
-        //        .Proj ProjectTo<TResponse>(_mapper.ConfigurationProvider)
-        //        .ToListAsync());
-        //}
-        public async ValueTask<TEntity> FindAsync(Guid entityId)
-            => await Set().FindAsync(entityId);
+        public async ValueTask<TEntity> FindAsync(
+            Guid entityId, CancellationToken token)
+            => await Set().FindAsync(entityId, token);
         public async Task<List<TEntity>> GetManyByConditionAsync(
-            Expression<Func<TEntity, bool>> predicate)
-           => await FindByCondition(predicate).ToListAsync();
+            Expression<Func<TEntity, bool>> predicate, CancellationToken token)
+           => await FindByCondition(predicate).ToListAsync(token);
         private IQueryable<TEntity> FindByCondition(
              Expression<Func<TEntity, bool>> predicate)
            => SetQuery().Where(predicate);
 
-        public Task<TEntity> GetSingleByConditionAsync(Expression<Func<TEntity, bool>> predicate)
+        public Task<TEntity> GetSingleByConditionAsync(
+            Expression<Func<TEntity, bool>> predicate,
+            CancellationToken token)
         {
             throw new NotImplementedException();
         }
 
-        public void Delete(TEntity entity)
+        public void Delete(TEntity entity, CancellationToken token)
         {
             throw new NotImplementedException();
         }
 
-        public async Task CreateAsync(TEntity entity)
-           => await Set().AddAsync(entity);
+        public async Task CreateAsync(
+            TEntity entity, CancellationToken token)
+           => await Set().AddAsync(entity,token);
 
 
     }

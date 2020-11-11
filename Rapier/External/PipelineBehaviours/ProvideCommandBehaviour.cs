@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Rapier.External.PipelineBehaviours
 {
-    public class ProvideCommandBehaviour<TRequest, TResponse> :
+    internal sealed class ProvideCommandBehaviour<TRequest, TResponse> :
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : ICommandReciever<IModifyRequest>, IRequest<TResponse>, ICommand
     {

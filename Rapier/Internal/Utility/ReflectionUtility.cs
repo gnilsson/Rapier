@@ -1,8 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Rapier.External;
+using Rapier.External.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Rapier.Internal.Utility
 {
@@ -55,6 +62,6 @@ namespace Rapier.Internal.Utility
         public static bool IsEnumerableType(
             this Type type)
             => type.GetInterface(nameof(IEnumerable)) != null;
-
     }
+
 }

@@ -15,9 +15,9 @@ namespace Rapier.External.Handlers
         where TEntity : Entity
         where TRequest : QueryReciever, IRequest<PagedResponse<TResponse>>
     {
-        private readonly IRepository<TEntity, TResponse> _repository;
-        private readonly IMapper _mapper;
-        private readonly IUriService _uriService;
+        internal readonly IRepository<TEntity, TResponse> _repository;
+        internal readonly IMapper _mapper;
+        internal readonly IUriService _uriService;
         //  private readonly ILogger _logger;
 
         public GetHandler(
@@ -31,7 +31,7 @@ namespace Rapier.External.Handlers
             TRequest request,
             CancellationToken cancellationToken)
         {
-            var queryData = await _repository.GetQueriedResultAsync(request);
+            var queryData = await _repository.GetQueriedResultAsync(request, cancellationToken);
             return PaginationUtility.CreatePaginatedResponse(
                 _uriService, request.PaginationQuery,
                 queryData.Items, request.RequestRoute, queryData.Total);

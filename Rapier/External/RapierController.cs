@@ -1,8 +1,10 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Rapier.Configuration;
 using Rapier.External.Extensions;
 using Rapier.External.Models;
+using Rapier.Internal;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +13,10 @@ using System.Threading.Tasks;
 
 namespace Rapier.External
 {
-   // [ApiExplorerSettings(GroupName = "Rapier Controller Collection")]
+    //  [DynamicAuthorize("m")]
     public class RapierController<TResponse, TQuery, TCommand> :
-        ControllerBase
+        ControllerBase,
+        IRapierController<TResponse, TQuery, TCommand>
         where TResponse : EntityResponse
         where TQuery : GetRequest
         where TCommand : IModifyRequest
@@ -28,6 +31,7 @@ namespace Rapier.External
             _controllerName = this.GetType().Name;
         }
 
+        //   [HttpGet, Authorize(AuthenticationSchemes = "TokenAuthenticationScheme")]
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] TQuery request)
         {
@@ -40,7 +44,7 @@ namespace Rapier.External
         public async Task<IActionResult> Create([FromBody] TCommand request)
         {
             return await _mediator
-                .Send(new CreateCommand<TCommand,TResponse>(request))
+                .Send(new CreateCommand<TCommand, TResponse>(request))
                 .ToCreatedAtResult(nameof(GetById), _controllerName);
         }
 

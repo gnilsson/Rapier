@@ -29,9 +29,10 @@ namespace Rapier.External.Handlers
             TRequest request, 
             CancellationToken cancellationToken)
         {
-            await _repository.CreateAsync(_creator(request));
+            await _repository.CreateAsync(_creator(request), cancellationToken);
             await _repositoryWrapper.SaveAsync();
-            return _mapper.Map<TResponse>(await _repository.FindAsync(request.Id));
+            return _mapper.Map<TResponse>(
+                await _repository.FindAsync(request.Id, cancellationToken));
         }
     }
 }

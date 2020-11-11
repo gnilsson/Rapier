@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Collections.Generic;
 
 namespace Rapier.Server.Config
 {
@@ -49,6 +51,15 @@ namespace Rapier.Server.Config
             //    x.g
                 //x.SwaggerGeneratorOptions = new Swashbuckle.AspNetCore.SwaggerGen.SwaggerGeneratorOptions { }
             });
+        }
+    }
+
+    public class OpFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            var abc = new List<OpenApiTag> { new OpenApiTag { Description = "grpA" } };
+            throw new System.NotImplementedException();
         }
     }
 }

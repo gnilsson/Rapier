@@ -1,7 +1,9 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Rapier.Configuration.Settings;
 using Rapier.External;
+using Rapier.External.Enums;
 using Rapier.External.Models;
 using Rapier.Internal;
 using Rapier.Internal.Repositories;
@@ -31,8 +33,7 @@ namespace Rapier.Configuration
                 x.BaseType == typeof(EntityResponse) ||
                 x.BaseType == typeof(GetRequest) ||
                 x.GetInterface(nameof(IModifyRequest)) != null ||
-                x.GetInterface(nameof(IQueryConfiguration)) != null ||
-                typeof(AbstractValidator<>).IsAssignableFrom(x))
+                x.GetInterface(nameof(IQueryConfiguration)) != null)
                 .ToList();
 
             var parameters = exportedTypes
@@ -40,31 +41,49 @@ namespace Rapier.Configuration
                     .GetInterface(typeof(IParameter).Name) != null)
                 .Select(type => (type, type.GetCustomAttribute<QueryParameterAttribute>()));
 
-            var entitySettings = new List<IEntitySetting>();
+            var entitySettings = new List<IEntitySettings>();
             foreach (var entity in entityTypes)
             {
+                //if (config.RoutesByAttribute)
+                //{
+                //    var attRoute = responseType?.GetCustomAttribute<GeneratedControllerAttribute>()?.Route;
+                //}
                 var responseType = types.GetFirstClassChild(typeof(EntityResponse), entity.Name);
-                var route = config.RoutesByAttribute ?
-                    responseType?.GetCustomAttribute<GeneratedControllerAttribute>()?.Route ?? string.Empty :
-                    config.Routes[entity] ?? string.Empty;
                 var commandRequest = types.GetFirstInterfaceChild(typeof(IModifyRequest), entity.Name);
+                var queryRequest = types.GetFirstClassChild(typeof(GetRequest), entity.Name);
 
-                entitySettings.Add(new EntitySetting
+                var controller = config.EndpointSettingsCollection[entity];
+                var controllerType = typeof(RapierController<,,>)
+                    .MakeGenericType(
+                        responseType,
+                         queryRequest,
+                        commandRequest);
+
+                var authorizeEndpoints = new Dictionary<string, AuthorizationCategory>();
+                foreach (var action in controller.ActionSettingsCollection)
+                    authorizeEndpoints.Add(
+                        $"{controllerType.FullName}.{action.ActionMethod}", 
+                        action?.Authorize == AuthorizationCategory.None ?
+                        controller.Authorize : action.Authorize);
+
+                entitySettings.Add(new EntitySettings()
                 {
                     EntityType = entity,
                     ResponseType = responseType,
-                    QueryRequest = types.GetFirstClassChild(typeof(GetRequest), entity.Name), // remove from types ?
+                    QueryRequest =  queryRequest, // remove from types ?
                     CommandRequest = commandRequest,
                     QueryConfiguration = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entity.Name),
-                    ControllerRoute = route,
+                    ControllerRoute = controller.Route,
+                    ControllerName = controllerType.AssemblyQualifiedName,
                     Parameters = GetParameters(parameters, entity.Name),
                     Validator = GetValidator(exportedTypes, commandRequest),
+                    AuthorizeableEndpoints = authorizeEndpoints
 
                 });
 
             }
             config.ExtendedRepository = exportedTypes.FirstOrDefault(x => x.BaseType == typeof(Repository<,,>));
-            config.EntitySettings = entitySettings;
+            config.EntitySettingsCollection = entitySettings;
             return config;
         }
 
@@ -84,7 +103,10 @@ namespace Rapier.Configuration
                 AddRange(parameterTypes
                     .Where(x => x.Item2.Entity == entityName)
                     .Select(x => new KeyValuePair<string, Type>(
-                        x.Item2.Node, x.Item1)));
+                        x.Item2.Node, x.Item1)))
+                .AddRange(
+                (nameof(Entity.CreatedDate), typeof(CreatedDateParameter)),
+                (nameof(Entity.UpdatedDate), typeof(UpdatedDateParameter)));
 
         public static void AddUriService(this IServiceCollection services)
         {

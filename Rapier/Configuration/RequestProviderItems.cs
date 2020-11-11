@@ -1,4 +1,5 @@
-﻿using Rapier.Internal.Utility;
+﻿using Rapier.Configuration.Settings;
+using Rapier.Internal.Utility;
 using System.Collections.Generic;
 
 namespace Rapier.Configuration
@@ -8,5 +9,7 @@ namespace Rapier.Configuration
         public IReadOnlyDictionary<string, IReadOnlyDictionary<string,
             ExpressionUtility.ConstructorDelegate>> Parameters
         { get; set; }
+
+        public PaginationSettings PaginationSettings { get; set; }
     }
 }
