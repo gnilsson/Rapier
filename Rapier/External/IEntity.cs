@@ -1,9 +1,8 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 
 namespace Rapier.External
 {
-    public abstract class Entity
+    public interface IEntity
     {
         public Guid Id { get; set; }
         public DateTime CreatedDate { get; set; }

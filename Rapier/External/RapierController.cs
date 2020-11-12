@@ -31,8 +31,7 @@ namespace Rapier.External
             _controllerName = this.GetType().Name;
         }
 
-        //   [HttpGet, Authorize(AuthenticationSchemes = "TokenAuthenticationScheme")]
-        [HttpGet]
+        [HttpGet, ActionName(nameof(Get))]
         public async Task<IActionResult> Get([FromQuery] TQuery request)
         {
             return await _mediator

@@ -42,7 +42,6 @@ namespace Rapier.Configuration
                 .Select(type => (type, type.GetCustomAttribute<QueryParameterAttribute>()));
 
 
-
             var entitySettings = new List<IEntitySettings>();
             foreach (var entityType in entityTypes)
             {
@@ -60,7 +59,6 @@ namespace Rapier.Configuration
                         responseType,
                          queryRequestType,
                         commandRequestType);
-
 
                 entitySettings.Add(new EntitySettings()
                 {

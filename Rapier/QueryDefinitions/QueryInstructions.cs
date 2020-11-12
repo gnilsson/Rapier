@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace Rapier.QueryDefinitions
 {
-    public class QueryInstructions<TEntity> where TEntity : Entity
+    public class QueryInstructions<TEntity> where TEntity : class, IEntity
     {
         private readonly MethodInfo _contains;
         private readonly MethodInfo _compareTo;

@@ -10,7 +10,7 @@ namespace Rapier.CommandDefinitions
 {
     public class Modifier<TEntity, TCommand> :
                  IModifier<TEntity, TCommand>
-                 where TEntity : Entity
+                 where TEntity : IEntity
                  where TCommand : ICommand
     {
         private IDictionary<string, (object, Type)> _appends;
@@ -67,13 +67,23 @@ namespace Rapier.CommandDefinitions
             var typeGroups = command.RequestPropertyValues.GroupBy(c => c.Value.Item2);
             foreach (var grouping in typeGroups)
             {
-                var exprs = new List<BinaryExpression>();
+                var exprs = new List<Expression>();
                 foreach (var property in grouping)
                 {
-                    exprs.Add(
+                    // test?
+                    if (grouping.Key.IsEnumerableType())
+                    {
+                        var prop = Expression.Property(parameter, property.Key);
+                        var method = typeof(ICollection<>).GetMethod("Add", new[] { grouping.Key }); // addrange?
+                        exprs.Add(Expression.Call(prop, method, Expression.Constant(property.Value.Item1)));
+                    }
+                    else
+                    {
+                        exprs.Add(
                         Expression.Assign(
                             Expression.Property(parameter, property.Key),
                             Expression.Constant(property.Value.Item1)));
+                    }
                 }
                 Expression.Lambda<Action<TEntity>>(
                     Expression.NewArrayInit(

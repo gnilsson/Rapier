@@ -1,9 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Rapier.Configuration;
 using Rapier.External;
-using Rapier.Internal.Utility;
-using Rapier.QueryDefinitions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -33,7 +30,7 @@ namespace Rapier.Internal.Repositories
         public IGeneralRepository General
             => _general ??= new GeneralRepository<TContext>(_dbContext);
 
-        public IRepository<TEntity, TResponse> Get<TEntity, TResponse>() where TEntity : Entity
+        public IRepository<TEntity, TResponse> Get<TEntity, TResponse>() where TEntity : IEntity
             => (IRepository<TEntity, TResponse>)(
                 _repoCache.ContainsKey(typeof(TEntity).Name) ?
                 _repoCache[typeof(TEntity).Name] :
@@ -54,14 +51,14 @@ namespace Rapier.Internal.Repositories
         {
             var entries = _dbContext.ChangeTracker
                 .Entries()
-                .Where(e => e.Entity is Entity && (
+                .Where(e => e.Entity is IEntity && (
                 e.State == EntityState.Added ||
                 e.State == EntityState.Modified));
             foreach (var entityEntry in entries)
             {
-                ((Entity)entityEntry.Entity).UpdatedDate = DateTime.UtcNow;
+                ((IEntity)entityEntry.Entity).UpdatedDate = DateTime.UtcNow;
                 if (entityEntry.State == EntityState.Added)
-                    ((Entity)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
+                    ((IEntity)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
             }
             await _dbContext.SaveChangesAsync();
         }

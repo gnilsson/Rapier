@@ -12,7 +12,7 @@ namespace Rapier.External.Handlers
 {
     public class GetHandler<TEntity, TRequest, TResponse> :
         IRequestHandler<TRequest, PagedResponse<TResponse>>
-        where TEntity : Entity
+        where TEntity : IEntity
         where TRequest : QueryReciever, IRequest<PagedResponse<TResponse>>
     {
         internal readonly IRepository<TEntity, TResponse> _repository;

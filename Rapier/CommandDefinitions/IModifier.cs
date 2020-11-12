@@ -5,7 +5,7 @@ using System;
 namespace Rapier.CommandDefinitions
 {
     public interface IModifier<TEntity, TCommand>
-        where TEntity : Entity
+        where TEntity : IEntity
         where TCommand : ICommand
     {
         public UpdateDelegate Updater { get; }

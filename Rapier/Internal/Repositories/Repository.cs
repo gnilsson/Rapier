@@ -18,7 +18,7 @@ namespace Rapier.Internal.Repositories
     public class Repository<TEntity, TResponse, TContext> :
                  RepositoryConcept<TContext>,
                  IRepository<TEntity, TResponse>
-                 where TEntity : Entity
+                 where TEntity : class, IEntity 
                  where TContext : DbContext
     {
 

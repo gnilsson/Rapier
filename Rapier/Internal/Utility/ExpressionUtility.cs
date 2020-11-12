@@ -78,6 +78,7 @@ namespace Rapier.Internal.Utility
                 source.Expression, Expression.Quote(orderByExpr));
             return (IOrderedQueryable<TEntity>)source.Provider.CreateQuery<TEntity>(callExpr);
         }
+
         public static IQueryable<TEntity> IncludeBy<TEntity>(
             this IQueryable<TEntity> source,
             ICollection<string[]> details)
@@ -87,53 +88,6 @@ namespace Rapier.Internal.Utility
                 source = source.Include(string.Join(".", detail));
             return source;
         }
-        //public static IIncludableQueryable<TEntity, object> IncludeBy<TEntity>(
-        //        this IQueryable<TEntity> source,
-        //        ICollection<string[]> details)
-        //{
-        //    var type = typeof(TEntity);
-        //    var body = source.Expression;
-        //    foreach (var detail in details)
-        //    {
-        //        var parameter = Expression.Parameter(type, "px");
-        //        var property = Expression.Property(parameter, detail[0]);
-        //        body = CallInclude(
-        //            body, parameter, property, Methods.Include, 
-        //            new Type[] { type, property.Type });
-
-        //        foreach (var then in detail.Skip(1))
-        //        {
-        //            var previousType = property.Type.IsEnumerableType() ?
-        //                property.Type.GetGenericArguments()[0] :
-        //                property.Type;
-
-        //            parameter = Expression.Parameter(previousType, "py"); // then[0].ToString().ToLower()
-        //            property = Expression.Property(parameter, then);
-        //            body = CallInclude(
-        //                body, parameter, property, Methods.ThenInclude,
-        //                new Type[] { type, previousType, property.Type });
-        //        }
-        //    }
-        //    return Expression.Lambda<Func<IQueryable<TEntity>,
-        //        IIncludableQueryable<TEntity, object>>>(
-        //        body,
-        //        Expression.Parameter(typeof(IQueryable<TEntity>)))
-        //        .Compile()(source);
-        //}
-
-        //private static Expression CallInclude(
-        //    Expression body, ParameterExpression parameter,
-        //    MemberExpression property, string methodName,
-        //    Type[] types)
-        //{
-        //    var lambda = Expression.Lambda(
-        //        Expression.MakeMemberAccess(
-        //            parameter, property.Member), parameter);
-        //    return Expression.Call(
-        //        typeof(EntityFrameworkQueryableExtensions),
-        //        methodName, types, body,
-        //        Expression.Quote(lambda));
-        //}
 
         public static bool TryGetProperty(
             ParameterExpression parameter,

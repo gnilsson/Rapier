@@ -29,14 +29,19 @@ namespace Rapier.Server
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<RapierDbContext>(options =>
+                options.UseSqlServer(Configuration
+                    .GetConnectionString("sqlConn"))
+                .LogTo(Console.WriteLine));
+
             services.AddRapierControllers(opt =>
             {
                 opt.ContextType = typeof(RapierDbContext);
                 opt.AssemblyType = typeof(Startup);
 
-                var blogEndpoint = new ControllerEndpointSettings 
-                { 
-                    Route = "api/blogs", 
+                var blogEndpoint = new ControllerEndpointSettings
+                {
+                    Route = "api/blogs",
                     AuthorizeableEndpoint = new()
                     {
                         Category = AuthorizationCategory.Default,
@@ -57,9 +62,7 @@ namespace Rapier.Server
 
             });
 
-            services.AddDbContext<RapierDbContext>(options =>
-                options.UseSqlServer(Configuration
-                    .GetConnectionString("sqlConn")));
+
 
             services.AddJwt(Configuration);
             services.AddAuthorizationHandlers();
@@ -80,7 +83,7 @@ namespace Rapier.Server
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

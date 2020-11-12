@@ -10,7 +10,7 @@ namespace Rapier.External.Handlers
 {
     public class CreateHandler<TEntity, TRequest, TResponse> : 
         IRequestHandler<TRequest, TResponse>
-        where TEntity : Entity
+        where TEntity : IEntity
         where TRequest : ICommand, IRequest<TResponse>
     {
         internal readonly IRepository<TEntity, TResponse> _repository;

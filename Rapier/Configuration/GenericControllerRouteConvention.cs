@@ -27,20 +27,18 @@ namespace Rapier.Configuration
                 {
                     controller.Selectors.Add(new SelectorModel
                     {
-                        AttributeRouteModel = new AttributeRouteModel { Template = setting.ControllerRoute },                       
+                        AttributeRouteModel = new AttributeRouteModel { Template = setting.ControllerRoute },
                     });
-                    controller.ApiExplorer = new ApiExplorerModel { GroupName = $"{setting.EntityType.Name} Controller" };
+                    controller.ControllerName = $"{setting.EntityType.Name} Controller";
 
                     foreach (var action in controller.Actions)
-                    {
-                        var key = $"{controller.ControllerType.FullName}.{action.ActionMethod.Name}";
-                        if (setting.AuthorizeableEndpoints.TryGetValue(key, out var endpoint))
+                        if (setting.AuthorizeableEndpoints.TryGetValue(
+                            $"{controller.ControllerType.FullName}.{action.ActionMethod.Name}", out var endpoint))
                             if (endpoint.Category != AuthorizationCategory.None)
                                 action.Filters.Add(
                                     new AuthorizeFilter(
                                         endpoint.Category == AuthorizationCategory.Custom ?
-                                        endpoint.Policy : string.Empty));               
-                    }
+                                        endpoint.Policy : string.Empty));
                 }
             }
         }

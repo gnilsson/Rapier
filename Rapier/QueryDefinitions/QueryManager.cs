@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Rapier.QueryDefinitions
 {
-    public class QueryManager<TEntity> where TEntity : Entity
+    public class QueryManager<TEntity> where TEntity : class, IEntity
     {
         //   public Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>> Includer { get; private set; }
         public Func<IQueryable<TEntity>, IQueryable<TEntity>> Includer { get; private set; }

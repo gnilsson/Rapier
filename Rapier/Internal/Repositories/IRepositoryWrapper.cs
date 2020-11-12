@@ -5,7 +5,7 @@ namespace Rapier.Internal.Repositories
 {
     public interface IRepositoryWrapper
     {
-        IRepository<TEntity, TResponse> Get<TEntity, TResponse>() where TEntity : Entity;
+        IRepository<TEntity, TResponse> Get<TEntity, TResponse>() where TEntity : IEntity;
         IGeneralRepository General { get; }
         Task SaveAsync();
     }
