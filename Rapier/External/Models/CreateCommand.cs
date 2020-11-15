@@ -4,11 +4,20 @@ using System;
 
 namespace Rapier.External.Models
 {
-    public class CreateCommand<TCommand, TResponse> : 
-        CommandReciever<TCommand>, IRequest<TResponse> 
+    //public class CreateCommand<TCommand, TResponse> : 
+    //    CommandReciever<TCommand>, IRequest<TResponse> 
+    //    where TCommand : IModifyRequest
+    //{
+    //    public CreateCommand(TCommand request) 
+    //        : base(request, Guid.NewGuid())
+    //    { }
+    //}
+
+    public class CreateCommand<TCommand, TResponse> :
+        CommandReciever<TCommand>, IRequest<TResponse>
         where TCommand : IModifyRequest
     {
-        public CreateCommand(TCommand request) 
+        public CreateCommand(TCommand request)
             : base(request, Guid.NewGuid())
         { }
     }

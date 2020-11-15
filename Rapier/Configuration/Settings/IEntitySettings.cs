@@ -13,8 +13,8 @@ namespace Rapier.Configuration.Settings
         public Type ResponseType { get; set; }
         public Type SimplifiedResponseType { get; set; }
         public string ControllerRoute { get; set; }
-        public Type QueryRequest { get; set; }
-        public Type CommandRequest { get; set; }
+        public Type QueryRequestType { get; set; }
+        public Type CommandRequestType { get; set; }
         public Type QueryConfiguration { get; set; }
         public IDictionary<string, Type> Parameters { get; set; }
         public Type Validator { get; set; }

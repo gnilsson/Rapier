@@ -9,5 +9,6 @@ namespace Rapier.External.Models
         public string[] IgnoredProperties { get; set; }
         public Dictionary<string, (object, Type)> RequestPropertyValues { get; set; }
         public Guid Id { get; }
+        public string IncludeNavigation { get; set; }
     }
 }

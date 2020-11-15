@@ -2,8 +2,10 @@
 {
     public enum BlogCategory
     {
+        None = 0,
         Tutorial,
         Opinionated,
-        Constructive
+        Constructive,
+        Rant
     }
 }

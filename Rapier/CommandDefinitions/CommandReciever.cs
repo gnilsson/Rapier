@@ -13,6 +13,8 @@ namespace Rapier.CommandDefinitions
         public Dictionary<string, (object, Type)> RequestPropertyValues { get; set; }
         public Guid Id { get; }
         public TCommand Command { get; }
+        public string IncludeNavigation { get; set; }
+
         public CommandReciever(TCommand request, Guid id)
         {
             Command = request;

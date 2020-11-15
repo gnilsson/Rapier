@@ -16,17 +16,17 @@ namespace Rapier.Internal.Repositories
     {
 
         public GeneralRepository(
-            TContext dbContext) 
-            : base(dbContext) 
+            TContext dbContext)
+            : base(dbContext)
         { }
 
         private DbSet<TEntity> Set<TEntity>() where TEntity : class
             => DbContext.Set<TEntity>();
-        private DbSet<Entity> Set(Type entityType)
-            => (DbSet<Entity>)typeof(DbContext)
-            .GetMethod("Set")
-            .MakeGenericMethod(entityType)
-            .Invoke(DbContext, null);
+        //private DbSet<Entity> Set(Type entityType)
+        //    => (DbSet<Entity>)typeof(DbContext)
+        //    .GetMethod("Set")
+        //    .MakeGenericMethod(entityType)
+        //    .Invoke(DbContext, null);
 
 
         private IQueryable<TEntity> SetQuery<TEntity>() where TEntity : class
@@ -58,19 +58,28 @@ namespace Rapier.Internal.Repositories
         public async ValueTask<TEntity> FindAsync<TEntity>(
             Guid entityId,
             CancellationToken token)
-            where TEntity : Entity
-          => await Set<TEntity>().FindAsync(entityId,token);
-        public async ValueTask<Entity> FindAsync(
-            Type entityType,
-            Guid entityId)
-        => await Set(entityType).FindAsync(entityId);
+            where TEntity : class, IEntity
+          => await Set<TEntity>().FindAsync(new object[] { entityId }, token);
+        //public async ValueTask<IEntity> FindAsync(
+        //    Type entityType,
+        //    Guid entityId)
+        //=> await Set(entityType).FindAsync(entityId);
 
         public async Task<List<TEntity>> GetManyAsync<TEntity>(
             IEnumerable<Guid> entityIds,
             CancellationToken token)
-            where TEntity : Entity
+            where TEntity : class, IEntity
              => await FindByCondition<TEntity>(e => entityIds.Contains(e.Id))
                 .ToListAsync(token);
+
+        //public async Task<List<TEntity>> GetManyAsync<TEntity>(
+        //    IEnumerable<Guid> entityIds,
+        //    string includeNavigation,
+        //    CancellationToken token)
+        //    where TEntity : class, IEntity
+        //     => await FindByCondition<TEntity>(e => entityIds.Contains(e.Id))
+        //        .Include(includeNavigation)
+        //        .ToListAsync(token);
 
         public async Task CreateAsync<TEntity>(
             TEntity entity, CancellationToken token)

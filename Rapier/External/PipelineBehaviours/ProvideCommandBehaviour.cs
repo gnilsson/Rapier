@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Rapier.CommandDefinitions;
 using Rapier.External.Models;
+using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using System;
 using System.Collections.Generic;
@@ -14,30 +15,47 @@ namespace Rapier.External.PipelineBehaviours
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : ICommandReciever<IModifyRequest>, IRequest<TResponse>, ICommand
     {
+        private readonly IGeneralRepository _repository;
+        public ProvideCommandBehaviour(IRepositoryWrapper repositoryWrapper)
+        {
+            _repository = repositoryWrapper.General;
+        }
         public async Task<TResponse> Handle(
-            TRequest request, 
-            CancellationToken cancellationToken, 
+            TRequest request,
+            CancellationToken cancellationToken,
             RequestHandlerDelegate<TResponse> next)
         {
-            request.IgnoredProperties = new string[]
-            { 
-                nameof(Entity.CreatedDate), 
-                nameof(Entity.UpdatedDate) 
-            };
             request.RequestPropertyValues = new Dictionary<string, (object, Type)>
             {
-                { nameof(ICommand.Id), (request.Id,typeof(Guid)) }
+                { nameof(ICommand.Id), (request.Id,typeof(Guid)) } // not needed in update
             };
 
-            var properties = request.Command
-                .GetType()
-                .GetProperties()
-                .Where(x => !request.IgnoredProperties.Contains(x.Name));
-
+            var properties = request.Command.GetType().GetProperties();
             foreach (var prop in properties)
-                if (prop.TryGetPropertyValue(request.Command, out var value))
-                    request.RequestPropertyValues.Add(
-                        value.Key, (value.Value, value.Value.GetType()));
+                if (prop.TryGetPropertyValue(request.Command, out var keyPair))
+                    if (prop.PropertyType.BaseType == typeof(List<Guid>))
+                    {
+                        var entityType = prop.PropertyType.GetGenericArguments()[0];
+                        var method = typeof(IGeneralRepository)
+                            .GetMethod("GetManyAsync", 1,
+                            new[] { typeof(IEnumerable<Guid>), typeof(CancellationToken) })
+                            .MakeGenericMethod(entityType);
+
+                        var entities = await method.InvokeAsync(
+                            _repository,
+                            new object[] { keyPair.Value, cancellationToken });
+
+                        var colName = entityType.Name + 's'; // name registration
+                        request.RequestPropertyValues.Add(
+                           colName, (entities, entityType)); 
+
+                        request.IncludeNavigation = string.Join(".", colName); // this is not right, right?
+                    }
+                    else
+                    {
+                        request.RequestPropertyValues.Add(
+                            keyPair.Key, (keyPair.Value, keyPair.Value.GetType()));
+                    }
 
             return await next();
         }

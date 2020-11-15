@@ -18,7 +18,7 @@ namespace Rapier.Internal.Repositories
     public class Repository<TEntity, TResponse, TContext> :
                  RepositoryConcept<TContext>,
                  IRepository<TEntity, TResponse>
-                 where TEntity : class, IEntity 
+                 where TEntity : class, IEntity
                  where TContext : DbContext
     {
 
@@ -42,7 +42,7 @@ namespace Rapier.Internal.Repositories
             QueryReciever queryReciever, CancellationToken token)
         {
             var query = SetQuery().AsNoTracking();
-            var count = await query.CountAsync();
+            var count = await query.CountAsync(token);
             if (_querier != null)
                 query = query.Where(_querier(queryReciever.Parameters));
             if (_orderer != null)
@@ -58,7 +58,7 @@ namespace Rapier.Internal.Repositories
 
         public async ValueTask<TEntity> FindAsync(
             Guid entityId, CancellationToken token)
-            => await Set().FindAsync(entityId, token);
+            => await Set().FindAsync(new object[] { entityId }, token);
         public async Task<List<TEntity>> GetManyByConditionAsync(
             Expression<Func<TEntity, bool>> predicate, CancellationToken token)
            => await FindByCondition(predicate).ToListAsync(token);
@@ -66,12 +66,14 @@ namespace Rapier.Internal.Repositories
              Expression<Func<TEntity, bool>> predicate)
            => SetQuery().Where(predicate);
 
-        public Task<TEntity> GetSingleByConditionAsync(
+        public async Task<TEntity> GetSingleByConditionAsync(
             Expression<Func<TEntity, bool>> predicate,
+            string includeNavigation,
             CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
+          => await SetQuery()
+                .Where(predicate)
+                .Include(includeNavigation)
+                .FirstOrDefaultAsync(token);
 
         public void Delete(TEntity entity, CancellationToken token)
         {
@@ -80,7 +82,7 @@ namespace Rapier.Internal.Repositories
 
         public async Task CreateAsync(
             TEntity entity, CancellationToken token)
-           => await Set().AddAsync(entity,token);
+           => await Set().AddAsync(entity, token);
 
 
     }

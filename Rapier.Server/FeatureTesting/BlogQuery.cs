@@ -3,7 +3,7 @@ using Rapier.External.Models;
 using Rapier.QueryDefinitions;
 using Rapier.Server.Responses;
 
-namespace Rapier.Server.QueryConfiguration
+namespace Rapier.Server.FeatureTesting
 {
     public class BlogQuery : QueryReciever, IRequest<PagedResponse<BlogResponse>>
     {

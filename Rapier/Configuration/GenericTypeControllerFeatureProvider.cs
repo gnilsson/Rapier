@@ -22,8 +22,8 @@ namespace Rapier.Configuration
                     typeof(RapierController<,,>)
                     .MakeGenericType(
                         setting.ResponseType,
-                        setting.QueryRequest,
-                        setting.CommandRequest)
+                        setting.QueryRequestType,
+                        setting.CommandRequestType)
                     .GetTypeInfo());
             }
         }

@@ -31,7 +31,8 @@ namespace Rapier.Internal.Utility
         {
             parentInterface = type
                 .GetInterfaces()?
-                .FirstOrDefault(x => x.GetTypeInfo().ImplementedInterfaces.Contains(interfaceType));
+                .FirstOrDefault(x => x.GetTypeInfo()
+                    .ImplementedInterfaces.Contains(interfaceType));
             return parentInterface != null;
         }
 
@@ -42,7 +43,18 @@ namespace Rapier.Internal.Utility
         {
             var propValue = property.GetValue(data);
             value = KeyValuePair.Create(property.Name, propValue);
-            return !string.IsNullOrWhiteSpace(propValue?.ToString());
+            return propValue is not null ||
+                  (propValue is int and 0) ||
+                  (propValue is string and null or "");
+
+            //return propValue is not null &&
+            //    !(propValue is int and 0) &&
+            //    !(propValue is string and null or "");
+
+            //&&
+            //!(propValue is Enum e and Enum. .Parse(null,"") is 0)
+            // .IsNullOrWhiteSpace(stringValue));
+            //!string.IsNullOrWhiteSpace(propValue?.ToString());
         }
 
         public static Type GetFirstClassChild(
@@ -62,6 +74,29 @@ namespace Rapier.Internal.Utility
         public static bool IsEnumerableType(
             this Type type)
             => type.GetInterface(nameof(IEnumerable)) != null;
+
+        public static bool TryGetInterfaceType(
+            this Type baseType,
+            string interfaceName,
+            out Type interfaceType)
+        {
+            interfaceType = baseType.GetInterface(interfaceName);
+            return interfaceType != null;
+        }
+
+        public static async Task<object> InvokeAsync(
+            this MethodInfo method,
+            object obj,
+            params object[] parameters)
+        {
+            var task = await Task.FromResult(method.Invoke(obj, parameters));
+            var resultProperty = task.GetType().GetProperty("Result");
+            return resultProperty.GetValue(task);
+        }
+
+        public static bool IsEntity(
+            this Type type) =>
+            type.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity));
     }
 
 }

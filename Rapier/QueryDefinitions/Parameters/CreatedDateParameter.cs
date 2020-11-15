@@ -7,7 +7,7 @@ namespace Rapier.QueryDefinitions.Parameters
         public CreatedDateParameter(string value)
         {
             base.Set(value);
-            TableReferenceChildren = new[] { nameof(Entity.CreatedDate) };
+            TableReferenceChildren = new[] { nameof(IEntity.CreatedDate) };
         }
     }
 }

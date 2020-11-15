@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Rapier.CommandDefinitions
 {
@@ -14,15 +15,21 @@ namespace Rapier.CommandDefinitions
                  where TCommand : ICommand
     {
         private IDictionary<string, (object, Type)> _appends;
+
+        private readonly MemberInfo _createdMember;
+        private readonly MemberInfo _updatedMember;
+
         public Modifier()
         {
             Creator = Create;
             Updater = Update;
+            _createdMember = typeof(TEntity).GetMember(nameof(IEntity.CreatedDate))[0];
+            _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
         }
         public IModifier<TEntity, TCommand>.UpdateDelegate Updater { get; }
         public IModifier<TEntity, TCommand>.CreateDelegate Creator { get; }
 
-        public void DetailedAppend(params (string, (object, Type))[] properties)
+        public void DetailedAppend(params (string, (object, Type))[] properties) // not needed
         {
             _appends ??= new Dictionary<string, (object, Type)>();
             foreach (var prop in properties)
@@ -47,49 +54,77 @@ namespace Rapier.CommandDefinitions
             if (_appends != null)
                 command.RequestPropertyValues.AddRange(_appends);
 
-            var type = typeof(TEntity);
             var exprs = new List<MemberAssignment>();
             foreach (var property in command.RequestPropertyValues)
             {
-                exprs.Add(
-                    Expression.Bind(type.GetMember(property.Key)[0],
-                    Expression.Constant(property.Value.Item1)));
+                var member = typeof(TEntity).GetMember(property.Key)[0];
+                if (property.Value.Item2.IsEntity())
+                {
+                    var listType = typeof(List<>).MakeGenericType(property.Value.Item2);
+                    var addMethod = listType.GetMethod("Add");
+                    var entities = property.Value.Item1 as IEnumerable<object>;
+
+                    var list = Expression.ListInit(
+                        Expression.New(listType),
+                        entities.Select(entity => Expression.ElementInit(
+                            addMethod, Expression.Constant(entity))));
+
+                    exprs.Add(Expression.Bind(member, list));
+                }
+                else
+                {
+                    exprs.Add(
+                        Expression.Bind(member,
+                        Expression.Constant(property.Value.Item1)));
+                }
             }
+
+            var now = Expression.Constant(DateTime.UtcNow);
+            exprs.AddRange(new[] {
+                Expression.Bind(_createdMember, now),
+                Expression.Bind(_updatedMember, now)});
+
             return Expression.Lambda<Func<TEntity>>(
                 Expression.MemberInit(
-                    Expression.New(type), exprs))
+                    Expression.New(typeof(TEntity)), exprs))
                 .Compile()();
         }
 
         private void Update(TEntity entity, TCommand command)
         {
+            if (_appends != null)
+                command.RequestPropertyValues.AddRange(_appends);
+
             var parameter = Expression.Parameter(typeof(TEntity));
-            var typeGroups = command.RequestPropertyValues.GroupBy(c => c.Value.Item2);
-            foreach (var grouping in typeGroups)
-            {
-                var exprs = new List<Expression>();
-                foreach (var property in grouping)
+            command.RequestPropertyValues.Remove(nameof(IEntity.Id));
+            var exprs = new List<Expression>();
+            foreach (var property in command.RequestPropertyValues)
+                if (property.Value.Item2.IsEntity())
                 {
-                    // test?
-                    if (grouping.Key.IsEnumerableType())
-                    {
-                        var prop = Expression.Property(parameter, property.Key);
-                        var method = typeof(ICollection<>).GetMethod("Add", new[] { grouping.Key }); // addrange?
-                        exprs.Add(Expression.Call(prop, method, Expression.Constant(property.Value.Item1)));
-                    }
-                    else
-                    {
-                        exprs.Add(
-                        Expression.Assign(
-                            Expression.Property(parameter, property.Key),
-                            Expression.Constant(property.Value.Item1)));
-                    }
+                    var prop = Expression.Property(parameter, property.Key);
+                    var type = typeof(ICollection<>).MakeGenericType(property.Value.Item2);
+                    var addMethod = type.GetMethod("Add");
+                    var foreignEntities = property.Value.Item1 as IEnumerable<object>;
+                    var member = typeof(TEntity).GetProperty(property.Key).GetValue(entity) as IEnumerable<object>;
+
+                    exprs.AddRange(foreignEntities
+                         .Where(e => !member.Contains(e))
+                         .Select(ue => Expression.Call(
+                             prop, addMethod, Expression.Constant(ue))));
                 }
-                Expression.Lambda<Action<TEntity>>(
-                    Expression.NewArrayInit(
-                        grouping.Key, exprs), parameter)
+                else
+                {
+                    exprs.Add(
+                    Expression.Assign(
+                        Expression.Property(parameter, property.Key),
+                        Expression.Constant(property.Value.Item1)));
+                }
+
+            Expression.Lambda<Action<TEntity>>(
+                    Expression.Block(exprs), parameter)
                     .Compile()(entity);
-            }
+
+            entity.UpdatedDate = DateTime.UtcNow;
         }
     }
 }

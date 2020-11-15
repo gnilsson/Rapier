@@ -22,45 +22,36 @@ namespace Rapier.External
         where TCommand : IModifyRequest
 
     {
+        private const string ID = "{id}";
         private readonly IMediator _mediator;
-        private readonly string _controllerName;
-
-        public RapierController(IMediator mediator)
-        {
-            _mediator = mediator;
-            _controllerName = this.GetType().Name;
-        }
+        public RapierController(IMediator mediator) => _mediator = mediator;
 
         [HttpGet, ActionName(nameof(Get))]
         public async Task<IActionResult> Get([FromQuery] TQuery request)
-        {
-            return await _mediator
+            => await _mediator
                 .Send(new GetQuery<TQuery, TResponse>(request))
-                .ToOkResult();
-        }
+                .ToResult(Ok);
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] TCommand request)
-        {
-            return await _mediator
+            => await _mediator
                 .Send(new CreateCommand<TCommand, TResponse>(request))
-                .ToCreatedAtResult(nameof(GetById), _controllerName);
-        }
+                .ToResult(CreatedAtAction, nameof(GetById));
 
-        [HttpGet, Route("{id}")]
+        [HttpGet, Route(ID)]
         public async Task<IActionResult> GetById(Guid id)
         {
             var a = await _mediator.Send(new GetByIdQuery<TResponse>(id));
             return a == null ? (IActionResult)NotFound() : Ok(a);
         }
 
-        [HttpPut, Route("{id}")]
+        [HttpPatch, Route(ID)]
         public async Task<IActionResult> Update(Guid id, [FromBody] TCommand request)
-        {
-            return null;
-        }
+            => await _mediator
+                .Send(new UpdateCommand<TCommand, TResponse>(id, request))
+                .ToResult(Ok);
 
-        [HttpDelete, Route("{id}")]
+        [HttpDelete, Route(ID)]
         public async Task<IActionResult> Delete(Guid id)
         {
             return null;

@@ -22,12 +22,12 @@ namespace Rapier.Internal.Repositories
                             where TEntity : class;
         ValueTask<TEntity> FindAsync<TEntity>(Guid entityId,
                             CancellationToken token)
-                            where TEntity : Entity;
-        ValueTask<Entity> FindAsync(Type entityType, Guid entityId);
+                            where TEntity : class, IEntity;
+        //ValueTask<Entity> FindAsync(Type entityType, Guid entityId);
         Task<List<TEntity>> GetManyAsync<TEntity>(
                             IEnumerable<Guid> entityIds,
                             CancellationToken token)
-                            where TEntity : Entity;
+                            where TEntity : class, IEntity;
         Task CreateAsync<TEntity>(TEntity entity,
                             CancellationToken token)
                             where TEntity : class;

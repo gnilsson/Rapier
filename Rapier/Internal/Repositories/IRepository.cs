@@ -23,6 +23,7 @@ namespace Rapier.Internal.Repositories
         //                        QueryReciever<GetRequest> queryReciever);
         Task<TEntity> GetSingleByConditionAsync(
             Expression<Func<TEntity, bool>> predicate,
+            string includeNavigation,
             CancellationToken token);
         void Delete(TEntity entity, CancellationToken token);
         Task CreateAsync(TEntity entity, CancellationToken token);

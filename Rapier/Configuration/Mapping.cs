@@ -16,14 +16,14 @@ namespace Rapier.Configuration
             {
                 cfg.ShouldMapProperty = p => p.GetMethod.IsPublic || p.GetMethod.IsAssembly;
 
-                cfg.CreateMap<Entity, EntityResponse>()
+                cfg.CreateMap<IEntity, EntityResponse>()
                 .IncludeAllDerived()
                 .ForMember(
                     x => x.CreatedDate,
                     o => o.MapFrom(x => x.CreatedDate.ToLongDateTimeString()))
                 .ForMember(
                     x => x.UpdatedDate,
-                    o => o.MapFrom(x => x.CreatedDate.ToLongDateTimeString()));
+                    o => o.MapFrom(x => x.UpdatedDate.ToLongDateTimeString()));
 
                 foreach (var setting in _settings)
                 {

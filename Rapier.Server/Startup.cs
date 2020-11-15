@@ -29,11 +29,6 @@ namespace Rapier.Server
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<RapierDbContext>(options =>
-                options.UseSqlServer(Configuration
-                    .GetConnectionString("sqlConn"))
-                .LogTo(Console.WriteLine));
-
             services.AddRapierControllers(opt =>
             {
                 opt.ContextType = typeof(RapierDbContext);
@@ -42,27 +37,32 @@ namespace Rapier.Server
                 var blogEndpoint = new ControllerEndpointSettings
                 {
                     Route = "api/blogs",
-                    AuthorizeableEndpoint = new()
-                    {
-                        Category = AuthorizationCategory.Default,
-                        Policy = "WorksForRapier"
-                    }
+                    //AuthorizeableEndpoint = new()
+                    //{
+                    //    Category = AuthorizationCategory.Default,
+                    //    Policy = "WorksForRapier"
+                    //}
 
                 };
 
-                blogEndpoint.ActionSettingsCollection
-                    .FirstOrDefault(x => x.ActionMethod == "Get")
-                    .AuthorizeableEndpoint.Category = AuthorizationCategory.Custom;
+                //blogEndpoint.ActionSettingsCollection
+                //    .FirstOrDefault(x => x.ActionMethod == "Get")
+                //    .AuthorizeableEndpoint.Category = AuthorizationCategory.Custom;
 
                 opt.EndpointSettingsCollection = new Dictionary<Type, ControllerEndpointSettings>
                 {
                     { typeof(Blog), blogEndpoint },
                     { typeof(Post), new ControllerEndpointSettings { Route="api/posts" } },
+                    { typeof(Author), new ControllerEndpointSettings { Route="api/authors" } },
                 };
 
             });
 
-
+            services.AddDbContext<RapierDbContext>(options =>
+                options.UseSqlServer(Configuration
+                    .GetConnectionString("sqlConn"))
+                .LogTo(Console.WriteLine)
+                .EnableSensitiveDataLogging());
 
             services.AddJwt(Configuration);
             services.AddAuthorizationHandlers();

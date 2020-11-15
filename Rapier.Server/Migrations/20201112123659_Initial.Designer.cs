@@ -10,7 +10,7 @@ using Rapier.Server.Data;
 namespace Rapier.Server.Migrations
 {
     [DbContext(typeof(RapierDbContext))]
-    [Migration("20201112010202_Initial")]
+    [Migration("20201112123659_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

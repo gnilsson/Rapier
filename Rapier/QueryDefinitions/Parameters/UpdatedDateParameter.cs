@@ -7,7 +7,7 @@ namespace Rapier.QueryDefinitions.Parameters
         public UpdatedDateParameter(string value)
         {
             base.Set(value);
-            TableReferenceChildren = new[] { nameof(Entity.UpdatedDate) };
+            TableReferenceChildren = new[] { nameof(IEntity.UpdatedDate) };
         }
     }
 }

@@ -16,7 +16,6 @@ namespace Rapier.Server.Data
         public string Lastname { get; set; }
         public ProfessionCategory Profession { get; set; }
         public ICollection<Blog> Blogs { get; set; }
-        [Key]
         public Guid Id { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime UpdatedDate { get; set; }

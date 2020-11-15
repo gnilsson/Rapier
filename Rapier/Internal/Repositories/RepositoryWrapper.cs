@@ -47,20 +47,22 @@ namespace Rapier.Internal.Repositories
                 as IRepository<TEntity, TResponse>;
         }
 
-        public async Task SaveAsync()
-        {
-            var entries = _dbContext.ChangeTracker
-                .Entries()
-                .Where(e => e.Entity is IEntity && (
-                e.State == EntityState.Added ||
-                e.State == EntityState.Modified));
-            foreach (var entityEntry in entries)
-            {
-                ((IEntity)entityEntry.Entity).UpdatedDate = DateTime.UtcNow;
-                if (entityEntry.State == EntityState.Added)
-                    ((IEntity)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
-            }
-            await _dbContext.SaveChangesAsync();
-        }
+        public async Task SaveAsync() => await _dbContext.SaveChangesAsync();
+
+        //public async Task SaveAsync() // dosen't work on update cause of cache
+        //{
+        //    var entries = _dbContext.ChangeTracker
+        //        .Entries()
+        //        .Where(e => e.Entity is IEntity && (
+        //        e.State == EntityState.Added ||
+        //        e.State == EntityState.Modified));
+        //    foreach (var entityEntry in entries)
+        //    {
+        //        ((IEntity)entityEntry.Entity).UpdatedDate = DateTime.UtcNow;
+        //        if (entityEntry.State == EntityState.Added)
+        //            ((IEntity)entityEntry.Entity).CreatedDate = DateTime.UtcNow;
+        //    }
+        //    await _dbContext.SaveChangesAsync();
+        //}
     }
 }

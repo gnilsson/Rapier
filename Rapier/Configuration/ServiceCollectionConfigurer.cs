@@ -24,16 +24,20 @@ namespace Rapier.Configuration
         {
             var exportedTypes = config.AssemblyType.Assembly.GetExportedTypes();
             var entityTypes = exportedTypes
-                .Where(x => x.BaseType == typeof(Entity) && !x.IsAbstract)
+                .Where(x =>
+                    !x.IsAbstract &&
+                    !x.IsInterface &&
+                    x.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity)))
                 .ToList()
                 .OrderByDescending(x => x.Name.Length);
 
             var types = exportedTypes
-                .Where(x => !x.IsAbstract &&
-                x.BaseType == typeof(EntityResponse) ||
-                x.BaseType == typeof(GetRequest) ||
-                x.GetInterface(nameof(IModifyRequest)) != null ||
-                x.GetInterface(nameof(IQueryConfiguration)) != null)
+                .Where(x =>
+                    !x.IsAbstract &&
+                    x.BaseType == typeof(EntityResponse) ||
+                    x.BaseType == typeof(GetRequest) ||
+                    x.GetInterface(nameof(IModifyRequest)) != null ||
+                    x.GetInterface(nameof(IQueryConfiguration)) != null)
                 .ToList();
 
             var parameters = exportedTypes
@@ -45,6 +49,8 @@ namespace Rapier.Configuration
             var entitySettings = new List<IEntitySettings>();
             foreach (var entityType in entityTypes)
             {
+                if (!config.EndpointSettingsCollection.TryGetValue(entityType, out var controllerEndpoint))
+                    continue;
                 //if (config.RoutesByAttribute)
                 //{
                 //    var attRoute = responseType?.GetCustomAttribute<GeneratedControllerAttribute>()?.Route;
@@ -53,7 +59,7 @@ namespace Rapier.Configuration
                 var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
                 var queryRequestType = types.GetFirstClassChild(typeof(GetRequest), entityType.Name);
 
-                var controllerEndpoint = config.EndpointSettingsCollection[entityType];
+                //     var controllerEndpoint = config.EndpointSettingsCollection[entityType];
                 var controllerType = typeof(RapierController<,,>)
                     .MakeGenericType(
                         responseType,
@@ -64,14 +70,14 @@ namespace Rapier.Configuration
                 {
                     EntityType = entityType,
                     ResponseType = responseType,
-                    QueryRequest =  queryRequestType,
-                    CommandRequest = commandRequestType,
+                    QueryRequestType = queryRequestType,
+                    CommandRequestType = commandRequestType,
                     QueryConfiguration = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
                     ControllerRoute = controllerEndpoint.Route,
                     ControllerName = controllerType.AssemblyQualifiedName,
                     Parameters = GetParameters(parameters, entityType.Name),
                     Validator = GetValidator(exportedTypes, commandRequestType),
-                    AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint,controllerType),
+                    AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint, controllerType),
                 });
 
             }
@@ -98,15 +104,15 @@ namespace Rapier.Configuration
                     .Select(x => new KeyValuePair<string, Type>(
                         x.Item2.Node, x.Item1)))
                 .AddRange(
-                (nameof(Entity.CreatedDate), typeof(CreatedDateParameter)),
-                (nameof(Entity.UpdatedDate), typeof(UpdatedDateParameter)));
+                (nameof(IEntity.CreatedDate), typeof(CreatedDateParameter)),
+                (nameof(IEntity.UpdatedDate), typeof(UpdatedDateParameter)));
 
         private static IDictionary<string, AuthorizeableEndpoint> GetAuthorizeableEndpoints(
             ControllerEndpointSettings controllerEndpoint,
             Type controllerType)
         {
             var authorizeEndpoints = new Dictionary<string, AuthorizeableEndpoint>();
-            foreach (var actionEndpoint in controllerEndpoint.ActionSettingsCollection) 
+            foreach (var actionEndpoint in controllerEndpoint.ActionSettingsCollection)
                 authorizeEndpoints.Add(
                     $"{controllerType.FullName}.{actionEndpoint.ActionMethod}", new()
                     {
