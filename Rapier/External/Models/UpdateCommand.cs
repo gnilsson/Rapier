@@ -9,7 +9,6 @@ namespace Rapier.External.Models
         where TCommand : IModifyRequest
     {
         public UpdateCommand(Guid id, TCommand request)
-            : base(request, id)
-        { }
+            : base(request) => (Id) = (id);
     }
 }

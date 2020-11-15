@@ -13,7 +13,6 @@ namespace Rapier.CommandDefinitions
 
         public delegate void UpdateDelegate(TEntity entity, TCommand command);
         public delegate TEntity CreateDelegate(TCommand command);
-        public void DetailedAppend(params (string, (object, Type))[] properties);
         public void Append(params (string, object)[] properties);
     }
 }

@@ -16,6 +16,7 @@ namespace Rapier.CommandDefinitions
     {
         private IDictionary<string, (object, Type)> _appends;
 
+        private readonly MemberInfo _idMember;
         private readonly MemberInfo _createdMember;
         private readonly MemberInfo _updatedMember;
 
@@ -23,21 +24,13 @@ namespace Rapier.CommandDefinitions
         {
             Creator = Create;
             Updater = Update;
+            _idMember = typeof(TEntity).GetMember(nameof(IEntity.Id))[0];
             _createdMember = typeof(TEntity).GetMember(nameof(IEntity.CreatedDate))[0];
             _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
         }
         public IModifier<TEntity, TCommand>.UpdateDelegate Updater { get; }
-        public IModifier<TEntity, TCommand>.CreateDelegate Creator { get; }
 
-        public void DetailedAppend(params (string, (object, Type))[] properties) // not needed
-        {
-            _appends ??= new Dictionary<string, (object, Type)>();
-            foreach (var prop in properties)
-            {
-                if (prop.Item2.Item1 != null)
-                    _appends.Add(prop.Item1, prop.Item2);
-            }
-        }
+        public IModifier<TEntity, TCommand>.CreateDelegate Creator { get; }
 
         public void Append(params (string, object)[] properties)
         {
@@ -81,6 +74,7 @@ namespace Rapier.CommandDefinitions
 
             var now = Expression.Constant(DateTime.UtcNow);
             exprs.AddRange(new[] {
+                Expression.Bind(_idMember, Expression.Constant(Guid.NewGuid())),
                 Expression.Bind(_createdMember, now),
                 Expression.Bind(_updatedMember, now)});
 
@@ -96,7 +90,6 @@ namespace Rapier.CommandDefinitions
                 command.RequestPropertyValues.AddRange(_appends);
 
             var parameter = Expression.Parameter(typeof(TEntity));
-            command.RequestPropertyValues.Remove(nameof(IEntity.Id));
             var exprs = new List<Expression>();
             foreach (var property in command.RequestPropertyValues)
                 if (property.Value.Item2.IsEntity())

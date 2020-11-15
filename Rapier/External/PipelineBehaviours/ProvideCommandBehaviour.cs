@@ -25,11 +25,6 @@ namespace Rapier.External.PipelineBehaviours
             CancellationToken cancellationToken,
             RequestHandlerDelegate<TResponse> next)
         {
-            request.RequestPropertyValues = new Dictionary<string, (object, Type)>
-            {
-                { nameof(ICommand.Id), (request.Id,typeof(Guid)) } // not needed in update
-            };
-
             var properties = request.Command.GetType().GetProperties();
             foreach (var prop in properties)
                 if (prop.TryGetPropertyValue(request.Command, out var keyPair))
