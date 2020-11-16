@@ -7,10 +7,8 @@ namespace Rapier.External.Models
 {
     public class GetByIdQuery<TResponse> : IRequest<TResponse>
     {
-        public GetByIdQuery(Guid id)
-        {
-            // base 64 ?
-            var a = id;
-        }
+        public GetByIdQuery(Guid id) => Id = id;
+
+        public Guid Id { get; }
     }
 }

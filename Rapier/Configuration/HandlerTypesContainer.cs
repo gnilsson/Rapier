@@ -16,9 +16,9 @@ namespace Rapier.Configuration
                 new [] { typeof(IRequestHandler<,>), typeof(CreateHandler<,,>) },
                 new [] { typeof(IRequestHandler<,>), typeof(GetHandler<,,>) },
                 new [] { typeof(IModifier<,>), typeof(Modifier<,>) },
-        //    //new [] { typeof(IRequestHandler<,>), typeof(GetByIdHandler<,,,>) },
+                new [] { typeof(IRequestHandler<,>), typeof(GetByIdHandler<,,>) },
                 new [] { typeof(IRequestHandler<,>), typeof(UpdateHandler<,,>) },
-        //    //new [] { typeof(IRequestHandler<,>), typeof(DeleteHandler<,>) },
+                new [] { typeof(IRequestHandler<,>), typeof(DeleteHandler<,>) },
 
                 //new [] { typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,,>) }, // < messes up the order of execution
                 //new [] { typeof(IPipelineBehavior<,>), typeof(ProvideCommandBehaviour<,>)},

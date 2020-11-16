@@ -2,7 +2,6 @@
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Rapier.External;
-using Rapier.External.Models;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
 using Rapier.QueryDefinitions.Parameters;
@@ -55,6 +54,15 @@ namespace Rapier.Internal.Repositories
                 .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
                 .ToListAsync(token));
         }
+
+        public async Task<TResponse> GetFirstOrDefaultAsync(
+            Expression<Func<TEntity, bool>> predicate,
+            CancellationToken token)
+          => await SetQuery()
+                    .AsNoTracking()
+                    .Where(predicate)
+                    .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
+                    .FirstOrDefaultAsync(token);
 
         public async ValueTask<TEntity> FindAsync(
             Guid entityId, CancellationToken token)

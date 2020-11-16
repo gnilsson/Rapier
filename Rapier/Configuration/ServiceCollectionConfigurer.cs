@@ -90,16 +90,15 @@ namespace Rapier.Configuration
             Type[] exportedTypes,
             Type commandRequest)
             => exportedTypes
-            .FirstOrDefault(x => x.IsSubclassOf(typeof(AbstractValidator<>)
-                .MakeGenericType(commandRequest))) ??
-            typeof(DefaultValidation<>)
-            .MakeGenericType(commandRequest);
+                .FirstOrDefault(x => x.IsSubclassOf(typeof(AbstractValidator<>)
+                    .MakeGenericType(commandRequest))) ?? 
+                typeof(DefaultValidation<>).MakeGenericType(commandRequest);
 
         private static IDictionary<string, Type> GetParameters(
             IEnumerable<(Type, QueryParameterAttribute)> parameterTypes,
             string entityName)
-            => new Dictionary<string, Type>().
-                AddRange(parameterTypes
+            => new Dictionary<string, Type>()
+                .AddRange(parameterTypes
                     .Where(x => x.Item2.Entity == entityName)
                     .Select(x => new KeyValuePair<string, Type>(
                         x.Item2.Node, x.Item1)))

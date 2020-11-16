@@ -1,19 +1,12 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Rapier.Configuration;
 using Rapier.External.Extensions;
 using Rapier.External.Models;
-using Rapier.Internal;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
-//using Serilog;
-//using Serilog.Core;
 
 namespace Rapier.External
 {
-    //  [DynamicAuthorize("m")]
     public class RapierController<TResponse, TQuery, TCommand> :
         ControllerBase,
         IRapierController<TResponse, TQuery, TCommand>
@@ -40,10 +33,9 @@ namespace Rapier.External
 
         [HttpGet, Route(ID)]
         public async Task<IActionResult> GetById(Guid id)
-        {
-            var a = await _mediator.Send(new GetByIdQuery<TResponse>(id));
-            return a == null ? (IActionResult)NotFound() : Ok(a);
-        }
+            => await _mediator
+                .Send(new GetByIdQuery<TResponse>(id))
+                .ToResult(Ok);
 
         [HttpPatch, Route(ID)]
         public async Task<IActionResult> Update(Guid id, [FromBody] TCommand request)
@@ -53,9 +45,8 @@ namespace Rapier.External
 
         [HttpDelete, Route(ID)]
         public async Task<IActionResult> Delete(Guid id)
-        {
-            return null;
-        }
-
+            => await _mediator
+                .Send(new DeleteCommand(id))
+                .ToResult(Ok);
     }
 }

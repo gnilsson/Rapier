@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Rapier.External;
-using Rapier.Internal.Utility;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace Rapier.Configuration
