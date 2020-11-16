@@ -34,28 +34,13 @@ namespace Rapier.Server
                 opt.ContextType = typeof(RapierDbContext);
                 opt.AssemblyType = typeof(Startup);
 
-                var blogEndpoint = new ControllerEndpointSettings
-                {
-                    Route = "api/blogs",
-                    //AuthorizeableEndpoint = new()
-                    //{
-                    //    Category = AuthorizationCategory.Default,
-                    //    Policy = "WorksForRapier"
-                    //}
+                opt.Add(typeof(Blog), "api/blogs")
+                    .Authorize(AuthorizationCategory.None, "WorksForRapier")
+                    .Action("Delete")
+                    .Authorize(AuthorizationCategory.Custom);
 
-                };
-
-                //blogEndpoint.ActionSettingsCollection
-                //    .FirstOrDefault(x => x.ActionMethod == "Get")
-                //    .AuthorizeableEndpoint.Category = AuthorizationCategory.Custom;
-
-                opt.EndpointSettingsCollection = new Dictionary<Type, ControllerEndpointSettings>
-                {
-                    { typeof(Blog), blogEndpoint },
-                    { typeof(Post), new ControllerEndpointSettings { Route="api/posts" } },
-                    { typeof(Author), new ControllerEndpointSettings { Route="api/authors" } },
-                };
-
+                opt.Add(typeof(Post), "api/posts");
+                opt.Add(typeof(Author), "api/authors");
             });
 
             services.AddDbContext<RapierDbContext>(options =>

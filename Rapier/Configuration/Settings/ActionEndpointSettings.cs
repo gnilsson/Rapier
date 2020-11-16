@@ -1,17 +1,11 @@
-﻿using Rapier.External.Enums;
-using Rapier.External.Models;
-using System;
-
-namespace Rapier.Configuration.Settings
+﻿namespace Rapier.Configuration.Settings
 {
-    public class ActionEndpointSettings
+    public class ActionEndpointSettings : EndpointBase, IEndpoint
     {
         public string ActionMethod { get; }
-        public AuthorizeableEndpoint AuthorizeableEndpoint { get; set; }
         public ActionEndpointSettings(string actionMethod)
         {
             ActionMethod = actionMethod;
-            AuthorizeableEndpoint = new();
         }
     }
 }

@@ -1,10 +1,8 @@
 ﻿using FluentValidation;
 using MediatR;
 using Rapier.CommandDefinitions;
-using Rapier.Configuration;
 using Rapier.Exceptions;
 using Rapier.External.Models;
-using Rapier.Internal.Utility;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
