@@ -9,7 +9,7 @@ namespace Rapier.External
 {
     public class RapierController<TResponse, TQuery, TCommand> :
         ControllerBase,
-        IRapierController<TResponse, TQuery, TCommand>
+        IRapierController<TQuery, TCommand>
         where TResponse : EntityResponse
         where TQuery : GetRequest
         where TCommand : IModifyRequest
@@ -19,7 +19,7 @@ namespace Rapier.External
         private readonly IMediator _mediator;
         public RapierController(IMediator mediator) => _mediator = mediator;
 
-        [HttpGet, ActionName(nameof(Get))]
+        [HttpGet]
         public async Task<IActionResult> Get([FromQuery] TQuery request)
             => await _mediator
                 .Send(new GetQuery<TQuery, TResponse>(request))

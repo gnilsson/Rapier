@@ -7,8 +7,7 @@ namespace Rapier.Configuration
     public class RequestProviderItems
     {
         public IReadOnlyDictionary<string, IReadOnlyDictionary<string,
-            ExpressionUtility.ConstructorDelegate>> Parameters
-        { get; set; }
+            ExpressionUtility.ConstructorDelegate>> Parameters { get; set; }
 
         public PaginationSettings PaginationSettings { get; set; }
     }

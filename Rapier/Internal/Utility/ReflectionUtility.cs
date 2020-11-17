@@ -1,14 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Rapier.External;
-using Rapier.External.Models;
+﻿using Rapier.External;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Rapier.Internal.Utility
@@ -46,15 +41,6 @@ namespace Rapier.Internal.Utility
             return propValue is not null ||
                   (propValue is int and 0) ||
                   (propValue is string and null or "");
-
-            //return propValue is not null &&
-            //    !(propValue is int and 0) &&
-            //    !(propValue is string and null or "");
-
-            //&&
-            //!(propValue is Enum e and Enum. .Parse(null,"") is 0)
-            // .IsNullOrWhiteSpace(stringValue));
-            //!string.IsNullOrWhiteSpace(propValue?.ToString());
         }
 
         public static Type GetFirstClassChild(

@@ -10,8 +10,7 @@ namespace Rapier.Configuration
     public class GenericTypeControllerFeatureProvider : IApplicationFeatureProvider<ControllerFeature>
     {
         private readonly RapierConfigurationOptions _config;
-        public GenericTypeControllerFeatureProvider(RapierConfigurationOptions config)
-            => _config = config;
+        public GenericTypeControllerFeatureProvider(RapierConfigurationOptions config) => _config = config;
         public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
         {
             foreach (var setting in _config.EntitySettingsCollection)

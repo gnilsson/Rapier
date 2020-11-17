@@ -38,10 +38,10 @@ namespace Rapier.Internal.Utility
             return current;
         }
 
-        public static string AppendQueryString(this string uri, string queryName, string queryValue)
-        {
-            return QueryHelpers.AddQueryString(uri, queryName, queryValue);
-        }
+        public static string AppendQueryString(
+            this string uri, string queryName, string queryValue) 
+            => QueryHelpers.AddQueryString(uri, queryName, queryValue);
+        
 
         public static IEnumerable<TSource> DistinctBy<TSource, TKey>(
             this IEnumerable<TSource> source,

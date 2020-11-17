@@ -101,7 +101,7 @@ namespace Rapier.CommandDefinitions
                     var member = typeof(TEntity).GetProperty(property.Key).GetValue(entity) as IEnumerable<object>;
 
                     exprs.AddRange(foreignEntities
-                         .Where(e => !member.Contains(e))
+                         .Where(e => !member.Contains(e)) // better way to check?
                          .Select(ue => Expression.Call(
                              prop, addMethod, Expression.Constant(ue))));
                 }
