@@ -12,7 +12,7 @@ namespace Rapier.QueryDefinitions.Parameters
         public virtual void Set(string value)
         {
             Value = DateTime.Parse(value);
-            Method = QueryMethods.DateTimeCompare;
+            Method = QueryMethods.CallDateTimeCompare;
         }
     }
 }

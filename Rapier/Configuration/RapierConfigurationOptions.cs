@@ -22,7 +22,7 @@ namespace Rapier.Configuration
 
         public RapierConfigurationOptions()
         {
-            _controllerMethods = typeof(IRapierController<,,>)
+            _controllerMethods = typeof(IRapierController<,>)
                 .GetMethods()
                 .Select(x => new ActionEndpointSettings(x.Name))
                 .ToList();

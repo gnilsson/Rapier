@@ -42,9 +42,9 @@ namespace Rapier.Internal.Repositories
         {
             var query = SetQuery().AsNoTracking();
             var count = await query.CountAsync(token);
-            if (_querier != null)
+            if (queryReciever.Parameters.Count > 0)
                 query = query.Where(_querier(queryReciever.Parameters));
-            if (_orderer != null)
+            if (queryReciever.OrderByParameter != null)
                 query = _orderer(query, queryReciever.OrderByParameter);
 
             return new QueryResult<TResponse>(

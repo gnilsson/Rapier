@@ -11,7 +11,7 @@ namespace Rapier.QueryDefinitions.Parameters
         public virtual void Set(string value)
         {
             Value = value;
-            Method = QueryMethods.StringContains;
+            Method = QueryMethods.CallStringContains;
         }
     }
 }

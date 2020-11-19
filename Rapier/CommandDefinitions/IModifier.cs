@@ -8,11 +8,8 @@ namespace Rapier.CommandDefinitions
         where TEntity : IEntity
         where TCommand : ICommand
     {
-        public UpdateDelegate Updater { get; }
-        public CreateDelegate Creator { get; }
-
-        public delegate void UpdateDelegate(TEntity entity, TCommand command);
-        public delegate TEntity CreateDelegate(TCommand command);
+        public Func<TCommand,TEntity> Create { get; }
+        public Action<TEntity,TCommand> Update { get; }
         public void Append(params (string, object)[] properties);
     }
 }

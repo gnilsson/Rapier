@@ -2,8 +2,8 @@
 {
     public static class QueryMethods
     {
-        public const string StringContains = nameof(StringContains);
-        public const string DateTimeCompare = nameof(DateTimeCompare);
+        public const string CallStringContains = nameof(CallStringContains);
+        public const string CallDateTimeCompare = nameof(CallDateTimeCompare);
     }
 
     public static class Methods

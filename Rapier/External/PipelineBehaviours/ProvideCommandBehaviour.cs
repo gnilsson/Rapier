@@ -32,7 +32,7 @@ namespace Rapier.External.PipelineBehaviours
                     {
                         var entityType = prop.PropertyType.GetGenericArguments()[0];
                         var method = typeof(IGeneralRepository)
-                            .GetMethod("GetManyAsync", 1,
+                            .GetMethod(nameof(IGeneralRepository.GetManyAsync), 1,
                             new[] { typeof(IEnumerable<Guid>), typeof(CancellationToken) })
                             .MakeGenericMethod(entityType);
 
@@ -41,15 +41,12 @@ namespace Rapier.External.PipelineBehaviours
                             new object[] { keyPair.Value, cancellationToken });
 
                         var colName = entityType.Name + 's'; // name registration
-                        request.RequestPropertyValues.Add(
-                           colName, (entities, entityType)); 
-
+                        request.RequestPropertyValues.Add(colName, entities);
                         request.IncludeNavigation = string.Join(".", colName); // this is not right, right?
                     }
                     else
                     {
-                        request.RequestPropertyValues.Add(
-                            keyPair.Key, (keyPair.Value, keyPair.Value.GetType()));
+                        request.RequestPropertyValues.Add(keyPair.Key, keyPair.Value);
                     }
 
             return await next();

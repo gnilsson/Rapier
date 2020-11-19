@@ -66,8 +66,6 @@ namespace Rapier.Configuration
                 IReadOnlyDictionary<string,
                 ExpressionUtility.ConstructorDelegate>>();
 
-            var generalQueryConfig = new QueryConfigurationGeneral();
-
             foreach (var setting in entitySettings)
             {
                 var entityTypes = new EntityTypes(setting);
@@ -93,10 +91,10 @@ namespace Rapier.Configuration
 
                 var queryConfigType = entityTypes.QueryConfiguration ?? typeof(DefaultQueryConfiguration);
                 var queryConfig = ExpressionUtility.CreateEmptyConstructor(queryConfigType);
-                var queryManagerType = typeof(QueryManager<>).MakeGenericType(setting.EntityType);
                 var queryManagerConstructor = ExpressionUtility.CreateConstructor(
-                    queryManagerType, typeof(IQueryConfiguration), typeof(QueryConfigurationGeneral));
-                var queryManager = queryManagerConstructor(queryConfig(), generalQueryConfig);
+                    typeof(QueryManager<>).MakeGenericType(setting.EntityType), 
+                    typeof(IQueryConfiguration));
+                var queryManager = queryManagerConstructor(queryConfig());
 
                 var repositoryConstructor = ExpressionUtility.CreateConstructor(
                     (config.ExtendedRepository ?? typeof(Repository<,,>))

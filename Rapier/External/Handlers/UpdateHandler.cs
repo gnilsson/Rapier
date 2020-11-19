@@ -3,6 +3,7 @@ using MediatR;
 using Rapier.CommandDefinitions;
 using Rapier.External.Models;
 using Rapier.Internal.Repositories;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,13 +18,13 @@ namespace Rapier.External.Handlers
         internal readonly IRepositoryWrapper _repositoryWrapper;
         internal readonly IMapper _mapper;
 
-        private readonly IModifier<TEntity, TRequest>.UpdateDelegate _updater;
+        private readonly Action<TEntity, TRequest> _update;
 
         public UpdateHandler(IRepositoryWrapper repositoryWrapper,
                              IMapper mapper,
                              IModifier<TEntity, TRequest> modifier) =>
-            (_repositoryWrapper, _repository, _mapper, _updater) =
-            (repositoryWrapper, repositoryWrapper.Get<TEntity, TResponse>(), mapper, modifier.Updater);
+            (_repositoryWrapper, _repository, _mapper, _update) =
+            (repositoryWrapper, repositoryWrapper.Get<TEntity, TResponse>(), mapper, modifier.Update);
 
         public virtual async Task<TResponse> Handle(
             TRequest request,
@@ -36,10 +37,9 @@ namespace Rapier.External.Handlers
 
             if (entity == null) return default;
 
-            _updater(entity, request);
+            _update(entity, request);
             await _repositoryWrapper.SaveAsync();
-            return _mapper.Map<TResponse>(
-                await _repository.FindAsync(request.Id, cancellationToken));
+            return _mapper.Map<TResponse>(entity);
         }
     }
 }

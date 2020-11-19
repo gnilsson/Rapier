@@ -10,7 +10,7 @@ namespace Rapier.CommandDefinitions
         where TCommand : IModifyRequest
     {
         public string[] IgnoredProperties { get; set; }
-        public IDictionary<string, (object, Type)> RequestPropertyValues { get; }
+        public IDictionary<string, object> RequestPropertyValues { get; }
         public Guid Id { get; internal set; }
         public TCommand Command { get; }
         public string IncludeNavigation { get; set; }
@@ -18,7 +18,7 @@ namespace Rapier.CommandDefinitions
         public CommandReciever(TCommand request)
         {
             Command = request;
-            RequestPropertyValues = new Dictionary<string, (object, Type)>(); // type not really needed
+            RequestPropertyValues = new Dictionary<string, object>();
         }
     }
 }

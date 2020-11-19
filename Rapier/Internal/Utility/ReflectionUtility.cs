@@ -83,6 +83,15 @@ namespace Rapier.Internal.Utility
         public static bool IsEntity(
             this Type type) =>
             type.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity));
+
+        public static bool IsEntityCollection(
+            this Type type) =>
+            type.GetGenericArguments()?
+            .FirstOrDefault()
+            .GetTypeInfo()
+            .ImplementedInterfaces
+                .Contains(typeof(IEntity)) ?? false;
+
     }
 
 }

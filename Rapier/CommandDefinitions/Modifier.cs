@@ -1,11 +1,12 @@
 ﻿using Rapier.External;
 using Rapier.External.Models;
+using Rapier.Internal;
 using Rapier.Internal.Utility;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace Rapier.CommandDefinitions
 {
@@ -14,52 +15,48 @@ namespace Rapier.CommandDefinitions
                  where TEntity : IEntity
                  where TCommand : ICommand
     {
-        private IDictionary<string, (object, Type)> _appends;
+        private IDictionary<string, object> _appends;
+        private readonly ConcurrentDictionary<TCommand, Func<TEntity>> _cacheCreate;
+        private readonly ConcurrentDictionary<TCommand, Action<TEntity>> _cacheUpdate;
 
-        private readonly MemberInfo _idMember;
-        private readonly MemberInfo _createdMember;
-        private readonly MemberInfo _updatedMember;
+        public Func<TCommand, TEntity> Create { get; }
+        public Action<TEntity, TCommand> Update { get; }
 
         public Modifier()
         {
-            Creator = Create;
-            Updater = Update;
-            _idMember = typeof(TEntity).GetMember(nameof(IEntity.Id))[0];
-            _createdMember = typeof(TEntity).GetMember(nameof(IEntity.CreatedDate))[0];
-            _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
+            Create = CreateHandle;
+            Update = UpdateHandle;
+            _cacheCreate = new ConcurrentDictionary<TCommand, Func<TEntity>>();
+            _cacheUpdate = new ConcurrentDictionary<TCommand, Action<TEntity>>();
         }
-        public IModifier<TEntity, TCommand>.UpdateDelegate Updater { get; }
-
-        public IModifier<TEntity, TCommand>.CreateDelegate Creator { get; }
 
         public void Append(params (string, object)[] properties)
         {
-            _appends ??= new Dictionary<string, (object, Type)>();
+            _appends ??= new Dictionary<string, object>();
             foreach (var prop in properties)
-            {
                 if (prop.Item2 != null)
-                    _appends.Add(prop.Item1, (prop.Item2, typeof(object)));
-            }
+                    _appends.Add(prop.Item1, prop.Item2);
         }
 
-        private TEntity Create(TCommand command)
+        private TEntity CreateHandle(TCommand command)
         {
             if (_appends != null)
                 command.RequestPropertyValues.AddRange(_appends);
 
             var exprs = new List<MemberAssignment>();
-            foreach (var property in command.RequestPropertyValues)
+            foreach (var propertyKeyPair in command.RequestPropertyValues)
             {
-                var member = typeof(TEntity).GetMember(property.Key)[0];
-                if (property.Value.Item2.IsEntity())
+                var member = typeof(TEntity).GetMember(propertyKeyPair.Key)[0];
+                var propertyType = propertyKeyPair.Value.GetType();
+                if (propertyType.IsEntityCollection())
                 {
-                    var listType = typeof(List<>).MakeGenericType(property.Value.Item2);
-                    var addMethod = listType.GetMethod("Add");
-                    var entities = property.Value.Item1 as IEnumerable<object>;
+                    var foreignType = typeof(List<>).MakeGenericType(propertyType);
+                    var addMethod = foreignType.GetMethod("Add");
+                    var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
 
                     var list = Expression.ListInit(
-                        Expression.New(listType),
-                        entities.Select(entity => Expression.ElementInit(
+                        Expression.New(foreignType),
+                        foreignEntities.Select(entity => Expression.ElementInit(
                             addMethod, Expression.Constant(entity))));
 
                     exprs.Add(Expression.Bind(member, list));
@@ -68,56 +65,50 @@ namespace Rapier.CommandDefinitions
                 {
                     exprs.Add(
                         Expression.Bind(member,
-                        Expression.Constant(property.Value.Item1)));
+                        Expression.Constant(propertyKeyPair.Value)));
                 }
             }
 
-            var now = Expression.Constant(DateTime.UtcNow);
-            exprs.AddRange(new[] {
-                Expression.Bind(_idMember, Expression.Constant(Guid.NewGuid())),
-                Expression.Bind(_createdMember, now),
-                Expression.Bind(_updatedMember, now)});
-
-            return Expression.Lambda<Func<TEntity>>(
-                Expression.MemberInit(
-                    Expression.New(typeof(TEntity)), exprs))
-                .Compile()();
+            return _cacheCreate.GetOrAdd(
+                command,
+                ExpressionFactory.Create<TEntity>(exprs))();
         }
 
-        private void Update(TEntity entity, TCommand command)
+        private void UpdateHandle(TEntity entity, TCommand command)
         {
             if (_appends != null)
                 command.RequestPropertyValues.AddRange(_appends);
 
             var parameter = Expression.Parameter(typeof(TEntity));
             var exprs = new List<Expression>();
-            foreach (var property in command.RequestPropertyValues)
-                if (property.Value.Item2.IsEntity())
+            foreach (var propertyKeyPair in command.RequestPropertyValues)
+            {
+                var propertyType = propertyKeyPair.Value.GetType();
+                if (propertyType.IsEntityCollection())
                 {
-                    var prop = Expression.Property(parameter, property.Key);
-                    var type = typeof(ICollection<>).MakeGenericType(property.Value.Item2);
-                    var addMethod = type.GetMethod("Add");
-                    var foreignEntities = property.Value.Item1 as IEnumerable<object>;
-                    var member = typeof(TEntity).GetProperty(property.Key).GetValue(entity) as IEnumerable<object>;
+                    var property = Expression.Property(parameter, propertyKeyPair.Key);
+                    var foreignType = typeof(ICollection<>).MakeGenericType(propertyType);
+                    var addMethod = foreignType.GetMethod("Add");
+                    var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
+                    var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
 
                     exprs.AddRange(foreignEntities
-                         .Where(e => !member.Contains(e)) // better way to check?
-                         .Select(ue => Expression.Call(
-                             prop, addMethod, Expression.Constant(ue))));
+                         .Where(foreign => !member.Contains(foreign)) // better way to check?
+                         .Select(uforeign => Expression.Call(
+                             property, addMethod, Expression.Constant(uforeign))));
                 }
                 else
                 {
                     exprs.Add(
                     Expression.Assign(
-                        Expression.Property(parameter, property.Key),
-                        Expression.Constant(property.Value.Item1)));
+                        Expression.Property(parameter, propertyKeyPair.Key),
+                        Expression.Constant(propertyKeyPair.Value)));
                 }
+            }
 
-            Expression.Lambda<Action<TEntity>>(
-                    Expression.Block(exprs), parameter)
-                    .Compile()(entity);
-
-            entity.UpdatedDate = DateTime.UtcNow;
+            _cacheUpdate.GetOrAdd(
+                command,
+                ExpressionFactory.Update<TEntity>(exprs, parameter))(entity);
         }
     }
 }

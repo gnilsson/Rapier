@@ -18,7 +18,8 @@ namespace Rapier.Internal.Utility
             return Expression.Lambda<EmptyConstructorDelegate>(
                 Expression.New(
                     type.GetConstructor(
-                        Type.EmptyTypes))).Compile();
+                        Type.EmptyTypes)))
+                .Compile();
         }
 
         public delegate object ConstructorDelegate(params object[] args);
