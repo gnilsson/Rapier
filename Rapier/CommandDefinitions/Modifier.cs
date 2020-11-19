@@ -48,9 +48,9 @@ namespace Rapier.CommandDefinitions
             {
                 var member = typeof(TEntity).GetMember(propertyKeyPair.Key)[0];
                 var propertyType = propertyKeyPair.Value.GetType();
-                if (propertyType.IsEntityCollection())
+                if (propertyType.IsEntityCollection(out var entityType))
                 {
-                    var foreignType = typeof(List<>).MakeGenericType(propertyType);
+                    var foreignType = typeof(List<>).MakeGenericType(entityType);
                     var addMethod = foreignType.GetMethod("Add");
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
 
@@ -84,10 +84,10 @@ namespace Rapier.CommandDefinitions
             foreach (var propertyKeyPair in command.RequestPropertyValues)
             {
                 var propertyType = propertyKeyPair.Value.GetType();
-                if (propertyType.IsEntityCollection())
+                if (propertyType.IsEntityCollection(out var entityType))
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
-                    var foreignType = typeof(ICollection<>).MakeGenericType(propertyType);
+                    var foreignType = typeof(ICollection<>).MakeGenericType(entityType);
                     var addMethod = foreignType.GetMethod("Add");
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
                     var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
