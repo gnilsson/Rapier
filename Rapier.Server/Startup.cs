@@ -12,6 +12,7 @@ using Rapier.External.Enums;
 using Rapier.Server.Authorization;
 using Rapier.Server.Config;
 using Rapier.Server.Data;
+using Rapier.Server.Descriptive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,10 +50,12 @@ namespace Rapier.Server
                 .LogTo(Console.WriteLine)
                 .EnableSensitiveDataLogging());
 
+            services.AddCors(ConfigNames.CorsPolicy);
             services.AddJwt(Configuration);
             services.AddAuthorizationHandlers();
             services.AddRapier();
             services.AddSwagger();
+            services.AddSwaggerDocument();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -61,10 +64,13 @@ namespace Rapier.Server
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.AddRapierExceptionMiddleware();
             app.ConfigureSwagger(Configuration);
-
+            app.UseOpenApi();
+            app.UseSwaggerUi3();
             app.UseHttpsRedirection();
+            app.UseCors(ConfigNames.CorsPolicy);
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

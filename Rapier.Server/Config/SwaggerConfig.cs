@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using NJsonSchema;
+using Rapier.External.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System;
 using System.Collections.Generic;
@@ -49,10 +51,12 @@ namespace Rapier.Server.Config
                         Array.Empty<string>()
                     }
                 });
+
+                x.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
             });
         }
     }
-
+    
     public class OpFilter : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)

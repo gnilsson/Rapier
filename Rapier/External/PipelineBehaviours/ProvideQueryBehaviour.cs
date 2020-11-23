@@ -34,9 +34,8 @@ namespace Rapier.External.PipelineBehaviours
             CancellationToken cancellationToken,
             RequestHandlerDelegate<TResponse> next)
         {
-            var queryType = request.Query.GetType();
             request.Parameters = _parameters
-                .FirstOrDefault(x => x.Key == queryType.Name).Value
+                .FirstOrDefault(x => x.Key == request.Query.GetType().Name).Value
                 .Where(x => _httpContext.Request.Query.ContainsKey(x.Key))
                 .Select(x => x.Value(_httpContext.Request.Query[x.Key]) as IParameter)
                 .ToList();

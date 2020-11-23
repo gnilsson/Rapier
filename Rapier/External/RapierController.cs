@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Rapier.Configuration;
 using Rapier.External.Extensions;
 using Rapier.External.Models;
 using System;

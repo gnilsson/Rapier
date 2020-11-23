@@ -9,24 +9,24 @@ namespace Rapier.External.Extensions
     {
         public static async Task<IActionResult> ToResult<TResponse>(
             this Task<TResponse> resultTask,
-            Func<object, OkObjectResult> OkObject)
+            Func<object, OkObjectResult> okObject)
         {
             var result = await resultTask;
             return result == null ?
                 (IActionResult)new NotFoundResult() :
-                OkObject(result);
+                okObject(result);
         }
 
         public static async Task<IActionResult> ToResult<TResponse>(
             this Task<TResponse> resultTask,
-            Func<string, object, object, CreatedAtActionResult> CreatedAt,
+            Func<string, object, object, CreatedAtActionResult> createdAt,
             string action)
             where TResponse : EntityResponse
         {
             var result = await resultTask;
             return result == null ?
                 (IActionResult)new NotFoundResult() :
-                CreatedAt(action, new { id = result.Id }, result);
+                createdAt(action, new { id = result.Id }, result);
         }
     }
 }

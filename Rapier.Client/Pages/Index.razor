@@ -1,0 +1,21 @@
+﻿@page "/"
+@using HttpClients
+
+@inject IRapierClient client
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+
+@code{
+    protected override async Task OnInitializedAsync()
+    {
+        var abc = await client.GetByIdBlogAsync(new Guid("398c0846-25c7-4e91-8926-030c7c48908c"));
+        var ff = await client.GetBlogsAsync();
+    }
+
+
+}

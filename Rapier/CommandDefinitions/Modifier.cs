@@ -47,8 +47,7 @@ namespace Rapier.CommandDefinitions
             foreach (var propertyKeyPair in command.RequestPropertyValues)
             {
                 var member = typeof(TEntity).GetMember(propertyKeyPair.Key)[0];
-                var propertyType = propertyKeyPair.Value.GetType();
-                if (propertyType.IsEntityCollection(out var entityType))
+                if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
                 {
                     var foreignType = typeof(List<>).MakeGenericType(entityType);
                     var addMethod = foreignType.GetMethod("Add");
@@ -82,9 +81,7 @@ namespace Rapier.CommandDefinitions
             var parameter = Expression.Parameter(typeof(TEntity));
             var exprs = new List<Expression>();
             foreach (var propertyKeyPair in command.RequestPropertyValues)
-            {
-                var propertyType = propertyKeyPair.Value.GetType();
-                if (propertyType.IsEntityCollection(out var entityType))
+                if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
                     var foreignType = typeof(ICollection<>).MakeGenericType(entityType);
@@ -104,7 +101,6 @@ namespace Rapier.CommandDefinitions
                         Expression.Property(parameter, propertyKeyPair.Key),
                         Expression.Constant(propertyKeyPair.Value)));
                 }
-            }
 
             _cacheUpdate.GetOrAdd(
                 command,

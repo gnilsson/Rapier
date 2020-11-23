@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Rapier.CommandDefinitions;
 using Rapier.External.Models;
+using Rapier.Internal;
 using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using System;
@@ -25,18 +26,15 @@ namespace Rapier.External.PipelineBehaviours
             CancellationToken cancellationToken,
             RequestHandlerDelegate<TResponse> next)
         {
-            var properties = request.Command.GetType().GetProperties();
-            foreach (var prop in properties)
-                if (prop.TryGetPropertyValue(request.Command, out var keyPair))
-                    if (prop.PropertyType.BaseType == typeof(List<Guid>))
+            foreach (var property in request.Command.GetType().GetProperties())
+                if (property.TryGetPropertyValue(request.Command, out var keyPair))
+                    if (property.PropertyType.BaseType == typeof(List<Guid>))
                     {
-                        var entityType = prop.PropertyType.GetGenericArguments()[0];
-                        var method = typeof(IGeneralRepository)
-                            .GetMethod(nameof(IGeneralRepository.GetManyAsync), 1,
-                            new[] { typeof(IEnumerable<Guid>), typeof(CancellationToken) })
-                            .MakeGenericMethod(entityType);
+                        var entityType = property.PropertyType.GetGenericArguments()[0];
 
-                        var entities = await method.InvokeAsync(
+                        var entities = await MethodFactory.GetManyAsync
+                            .MakeGenericMethod(entityType)
+                            .InvokeAsync(
                             _repository,
                             new object[] { keyPair.Value, cancellationToken });
 
