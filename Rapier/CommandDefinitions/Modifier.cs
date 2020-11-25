@@ -1,4 +1,5 @@
-﻿using Rapier.External;
+﻿using Rapier.Descriptive;
+using Rapier.External;
 using Rapier.External.Models;
 using Rapier.Internal;
 using Rapier.Internal.Utility;
@@ -7,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Rapier.CommandDefinitions
 {
@@ -16,8 +18,11 @@ namespace Rapier.CommandDefinitions
                  where TCommand : ICommand
     {
         private IDictionary<string, object> _appends;
-        private readonly ConcurrentDictionary<TCommand, Func<TEntity>> _cacheCreate;
-        private readonly ConcurrentDictionary<TCommand, Action<TEntity>> _cacheUpdate;
+        //private readonly ConcurrentDictionary<TCommand, Func<TEntity>> _cacheCreate;
+        //private readonly ConcurrentDictionary<TCommand, Action<TEntity>> _cacheUpdate;
+        private readonly MemberInfo _idMember;
+        private readonly MemberInfo _createdMember;
+        private readonly MemberInfo _updatedMember;
 
         public Func<TCommand, TEntity> Create { get; }
         public Action<TEntity, TCommand> Update { get; }
@@ -26,8 +31,11 @@ namespace Rapier.CommandDefinitions
         {
             Create = CreateHandle;
             Update = UpdateHandle;
-            _cacheCreate = new ConcurrentDictionary<TCommand, Func<TEntity>>();
-            _cacheUpdate = new ConcurrentDictionary<TCommand, Action<TEntity>>();
+            //_cacheCreate = new ConcurrentDictionary<TCommand, Func<TEntity>>();
+            //_cacheUpdate = new ConcurrentDictionary<TCommand, Action<TEntity>>();
+            _idMember = typeof(TEntity).GetMember(nameof(IEntity.Id))[0];
+            _createdMember = typeof(TEntity).GetMember(nameof(IEntity.CreatedDate))[0];
+            _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
         }
 
         public void Append(params (string, object)[] properties)
@@ -38,6 +46,7 @@ namespace Rapier.CommandDefinitions
                     _appends.Add(prop.Item1, prop.Item2);
         }
 
+        // Todo: Increase perf
         private TEntity CreateHandle(TCommand command)
         {
             if (_appends != null)
@@ -50,7 +59,7 @@ namespace Rapier.CommandDefinitions
                 if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
                 {
                     var foreignType = typeof(List<>).MakeGenericType(entityType);
-                    var addMethod = foreignType.GetMethod("Add");
+                    var addMethod = foreignType.GetMethod(Methods.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
 
                     var list = Expression.ListInit(
@@ -68,9 +77,18 @@ namespace Rapier.CommandDefinitions
                 }
             }
 
-            return _cacheCreate.GetOrAdd(
-                command,
-                ExpressionFactory.Create<TEntity>(exprs))();
+            var now = Expression.Constant(DateTime.UtcNow);
+            exprs.AddRange(
+                new[]
+                {
+                    Expression.Bind(_idMember, Expression.Constant(Guid.NewGuid())),
+                    Expression.Bind(_createdMember, now),
+                    Expression.Bind(_updatedMember, now)
+                });
+
+            return Expression.Lambda<Func<TEntity>>(
+                Expression.MemberInit(
+                    Expression.New(typeof(TEntity)), exprs)).Compile()();
         }
 
         private void UpdateHandle(TEntity entity, TCommand command)
@@ -85,7 +103,7 @@ namespace Rapier.CommandDefinitions
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
                     var foreignType = typeof(ICollection<>).MakeGenericType(entityType);
-                    var addMethod = foreignType.GetMethod("Add");
+                    var addMethod = foreignType.GetMethod(Methods.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
                     var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
 
@@ -102,9 +120,13 @@ namespace Rapier.CommandDefinitions
                         Expression.Constant(propertyKeyPair.Value)));
                 }
 
-            _cacheUpdate.GetOrAdd(
-                command,
-                ExpressionFactory.Update<TEntity>(exprs, parameter))(entity);
+            exprs.Add(
+                Expression.Assign(
+                    Expression.Property(parameter, _updatedMember.Name),
+                    Expression.Constant(DateTime.UtcNow)));
+
+            Expression.Lambda<Action<TEntity>>(
+                Expression.Block(exprs), parameter).Compile()(entity);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Rapier.Configuration.Settings;
+using Rapier.External;
 using Rapier.External.Enums;
 using Rapier.External.Models;
 using System;
@@ -11,13 +12,27 @@ namespace Rapier.Configuration
 {
     public static class ConfigurationOptionsExtensions
     {
-        //public static ControllerEndpointSettings Add(Type entityType, string route)
-        //{
-        //    var controller = new ControllerEndpointSettings
-        //    { Route = route, ActionSettingsCollection = _controllerMethods };
-        //    EndpointSettingsCollection.Add(entityType, controller);
-        //    return controller;
-        //}
+        private static readonly List<ActionEndpointSettings> _controllerMethods;
+
+        static ConfigurationOptionsExtensions()
+        {
+            _controllerMethods = typeof(IRapierController<,>)
+                .GetMethods()
+                .Select(x => new ActionEndpointSettings(x.Name))
+                .ToList();
+        }
+
+        public static ControllerEndpointSettings Add(this RapierConfigurationOptions options, 
+            Type entityType, string route)
+        {
+            var controller = new ControllerEndpointSettings
+            { 
+                Route = route, 
+                ActionSettingsCollection = _controllerMethods 
+            };
+            options.EndpointSettingsCollection.Add(entityType, controller);
+            return controller;
+        }
 
         public static TEndpoint Authorize<TEndpoint>(
             this TEndpoint endpoint, AuthorizationCategory category,
@@ -31,10 +46,8 @@ namespace Rapier.Configuration
             return endpoint;
         }
 
-        //public static ActionEndpointSettings Action(
-        //    this ControllerEndpointSettings controller, string actionMethodName)
-        //    => controller.ActionSettingsCollection
-        //    .FirstOrDefault(x => x.ActionMethod.EndsWith(actionMethodName, StringComparison.OrdinalIgnoreCase));
-
+        public static ActionEndpointSettings Action(this ControllerEndpointSettings controller, string actionMethodName)
+            => controller.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod
+                .EndsWith(actionMethodName, StringComparison.OrdinalIgnoreCase));
     }
 }

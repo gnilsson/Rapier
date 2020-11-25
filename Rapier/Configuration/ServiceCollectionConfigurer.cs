@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Rapier.Configuration.Settings;
 using Rapier.External;
+using Rapier.External.Attributes;
 using Rapier.External.Enums;
 using Rapier.External.Models;
 using Rapier.Internal;
@@ -59,7 +60,7 @@ namespace Rapier.Configuration
                 });
             }
 
-            config.ExtendedRepository = exportedTypes.FirstOrDefault(x => x.BaseType == typeof(Repository<,,>));
+            config.ExtendedRepositoryType = exportedTypes.FirstOrDefault(x => x.BaseType == typeof(Repository<,,>));
             config.EntitySettingsCollection = entitySettings;
             return config;
         }

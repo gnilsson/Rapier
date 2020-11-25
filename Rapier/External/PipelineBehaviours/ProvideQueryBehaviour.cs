@@ -34,10 +34,14 @@ namespace Rapier.External.PipelineBehaviours
             CancellationToken cancellationToken,
             RequestHandlerDelegate<TResponse> next)
         {
+            //var queries = _httpContext.Request.Query
+            //    .Where(x => x.Key.EndsWith(".Value"))
+            //    .Select(x => new KeyValuePair<string, string>(x.Value, x.Key.Split('.')[0]));
+
             request.Parameters = _parameters
                 .FirstOrDefault(x => x.Key == request.Query.GetType().Name).Value
-                .Where(x => _httpContext.Request.Query.ContainsKey(x.Key))
-                .Select(x => x.Value(_httpContext.Request.Query[x.Key]) as IParameter)
+                .Where(x => _httpContext.Request.Query.ContainsKey(x.Key.Split('.')[0]))
+                .Select(x => x.Value(_httpContext.Request.Query[x.Key.Split('.')[0]]) as IParameter)
                 .ToList();
 
             request.PaginationQuery = new PaginationQuery(request.Query, _paginationSettings);

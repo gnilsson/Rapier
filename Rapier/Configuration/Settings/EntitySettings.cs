@@ -1,6 +1,4 @@
-﻿using Rapier.External.Enums;
-using Rapier.External.Models;
-using Rapier.Internal.Utility;
+﻿using Rapier.External.Models;
 using System;
 using System.Collections.Generic;
 
@@ -19,5 +17,6 @@ namespace Rapier.Configuration.Settings
         public IDictionary<string, Type> Parameters { get; set; }
         public Type Validator { get; set; }
         public IDictionary<string, AuthorizeableEndpoint> AuthorizeableEndpoints { get; set; }
+        public Type[] RegisteredForeignEntities { get; set; }
     }
 }

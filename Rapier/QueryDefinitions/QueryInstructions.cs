@@ -1,4 +1,5 @@
 ﻿using Rapier.Configuration;
+using Rapier.Descriptive;
 using Rapier.External;
 using Rapier.Internal;
 using Rapier.Internal.Utility;
@@ -72,21 +73,17 @@ namespace Rapier.QueryDefinitions
                 Expression baseProperty,
                 IParameter parameter)
         {
-            var parent = parameter.TableReferenceParents == null ?
+            var parent = parameter.ParentNavigationProperties == null ?
                 baseProperty :
-                GetProperty(baseProperty, parameter.TableReferenceParents);
-            return parameter.TableReferenceChildren
+                GetProperty(baseProperty, parameter.ParentNavigationProperties);
+            return parameter.NavigationProperties
                 .Select(child => Expression.PropertyOrField(parent, child))
                 .ToList();
         }
 
-        private Expression GetProperty(
-                Expression parameter,
-                string[] nodes,
-                int iterator = 0)
+        private Expression GetProperty(Expression parameter, string[] nodes, int iterator = 0)
         {
-            var next = Expression.PropertyOrField(
-                parameter, nodes[iterator]);
+            var next = Expression.PropertyOrField(parameter, nodes[iterator]);
             if (iterator < nodes.Length - 1)
                 GetProperty(next, nodes, iterator++);
             return next;
@@ -96,6 +93,9 @@ namespace Rapier.QueryDefinitions
                 List<MemberExpression> members,
                 IParameter parameter)
         {
+            if (parameter.Method == QueryMethods.Equal)
+                return Expression.Equal(members[0], Expression.Constant(parameter.Value));
+
             return (Expression)MethodFactory.QueryMethodContainer
                 .FirstOrDefault(x => x.Key == parameter.Method).Value
                 .Invoke(

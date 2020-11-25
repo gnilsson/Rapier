@@ -104,7 +104,7 @@ namespace Rapier.Configuration
                 var queryManager = queryManagerConstructor(queryConfig());
 
                 var repositoryConstructor = ExpressionUtility.CreateConstructor(
-                    (config.ExtendedRepository ?? typeof(Repository<,,>))
+                    (config.ExtendedRepositoryType ?? typeof(Repository<,,>))
                     .MakeGenericType(setting.EntityType, setting.ResponseType, config.ContextType),
                     config.ContextType,
                     typeof(IMapper),

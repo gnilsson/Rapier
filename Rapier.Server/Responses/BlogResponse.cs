@@ -1,5 +1,4 @@
 ﻿using Rapier.External.Models;
-using Rapier.Server.Enums;
 using System.Collections.Generic;
 
 namespace Rapier.Server.Responses

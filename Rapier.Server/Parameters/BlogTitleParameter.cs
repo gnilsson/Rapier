@@ -1,4 +1,4 @@
-﻿using Rapier.External;
+﻿using Rapier.External.Attributes;
 using Rapier.QueryDefinitions.Parameters;
 using Rapier.Server.Data;
 using Rapier.Server.Requests;
@@ -11,7 +11,7 @@ namespace Rapier.Server.Parameters
         public BlogTitleParameter(string value)
         {
             base.Set(value);          
-            TableReferenceChildren = new[] { nameof(Blog.Title) };
+            NavigationProperties = new[] { nameof(Blog.Title) };
         }
     }
 }

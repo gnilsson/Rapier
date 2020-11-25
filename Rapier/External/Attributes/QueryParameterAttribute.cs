@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Rapier.External
+namespace Rapier.External.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class QueryParameterAttribute : Attribute

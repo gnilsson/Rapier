@@ -1,17 +1,19 @@
 ﻿using Rapier.Descriptive;
+using System;
 
 namespace Rapier.QueryDefinitions.Parameters
 {
-    public abstract class StringParameter : IParameter
+    public abstract class ForeignIdParameter : IParameter
     {
         public string[] ParentNavigationProperties { get; protected set; }
         public string[] NavigationProperties { get; protected set; }
         public object Value { get; private set; }
         public string Method { get; private set; }
-        public virtual void Set(string value)
+
+        public void Set(string value)
         {
-            Value = value;
-            Method = QueryMethods.CallStringContains;
+            Value = Guid.Parse(value);
+            Method = QueryMethods.Equal;
         }
     }
 }

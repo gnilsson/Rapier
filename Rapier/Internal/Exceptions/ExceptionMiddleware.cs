@@ -16,11 +16,13 @@ namespace Rapier.Internal.Exceptions
     {
         private readonly RequestDelegate _next;
         private readonly ILogger _logger;
+
         public ExceptionMiddleware(RequestDelegate next/*, ILogger logger*/)
         {
             //_logger = logger;
             _next = next;
         }
+
         public async Task InvokeAsync(HttpContext httpContext)
         {
             try
@@ -33,7 +35,8 @@ namespace Rapier.Internal.Exceptions
                 await HandleExceptionAsync(httpContext, ex);
             }
         }
-        private Task HandleExceptionAsync(HttpContext context, Exception exception)
+
+        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = HttpContentType.ApplicationJson;
             var error = exception switch
@@ -46,7 +49,7 @@ namespace Rapier.Internal.Exceptions
             return context.Response.WriteAsync(error.ToString());
         }
 
-        private ErrorDetails GetBadRequest(HttpContext context, IEnumerable<string> messages = null)
+        private static ErrorDetails GetBadRequest(HttpContext context, IEnumerable<string> messages = null)
         {
             context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
             return new ErrorDetails()
@@ -57,7 +60,7 @@ namespace Rapier.Internal.Exceptions
             };
         }
 
-        private ErrorDetails GetInternal(HttpContext context)
+        private static ErrorDetails GetInternal(HttpContext context)
         {
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             return new ErrorDetails()

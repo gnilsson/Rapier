@@ -66,11 +66,6 @@ namespace Rapier.Configuration
                     _ => new ProducesResponseTypeAttribute(setting.ResponseType, 200)
                 });
                 action.Filters.Add(new ProducesResponseTypeAttribute(typeof(NotFoundResult), 404));
-
-                // instead of this we might want to format names as swagger operation
-                var entityName = action.ActionName == DefaultActions.Get ?
-                    $"{setting.EntityType.Name}s" : setting.EntityType.Name;
-                action.ActionName = $"{action.ActionName}{entityName}";
             };
         }
     }
