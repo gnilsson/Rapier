@@ -18,6 +18,7 @@ namespace Rapier.CommandDefinitions
                  where TCommand : ICommand
     {
         private IDictionary<string, object> _appends;
+        private List<string> _discards;
         //private readonly ConcurrentDictionary<TCommand, Func<TEntity>> _cacheCreate;
         //private readonly ConcurrentDictionary<TCommand, Action<TEntity>> _cacheUpdate;
         private readonly MemberInfo _idMember;
@@ -38,22 +39,27 @@ namespace Rapier.CommandDefinitions
             _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
         }
 
+        public void Discard(params string[] propertyNames)
+        {
+            _discards ??= new List<string>();
+            _discards.AddRange(propertyNames);
+        }
+
         public void Append(params (string, object)[] properties)
         {
             _appends ??= new Dictionary<string, object>();
-            foreach (var prop in properties)
-                if (prop.Item2 != null)
-                    _appends.Add(prop.Item1, prop.Item2);
+            foreach (var property in properties)
+                if (property.Item2 != null)
+                    _appends.Add(property.Item1, property.Item2);
         }
 
         // Todo: Increase perf
         private TEntity CreateHandle(TCommand command)
         {
-            if (_appends != null)
-                command.RequestPropertyValues.AddRange(_appends);
+            var propertyCollection = UpdatePropertyCollection(command.RequestPropertyValues);
 
             var exprs = new List<MemberAssignment>();
-            foreach (var propertyKeyPair in command.RequestPropertyValues)
+            foreach (var propertyKeyPair in propertyCollection)
             {
                 var member = typeof(TEntity).GetMember(propertyKeyPair.Key)[0];
                 if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
@@ -93,12 +99,11 @@ namespace Rapier.CommandDefinitions
 
         private void UpdateHandle(TEntity entity, TCommand command)
         {
-            if (_appends != null)
-                command.RequestPropertyValues.AddRange(_appends);
+            var propertyCollection = UpdatePropertyCollection(command.RequestPropertyValues);
 
             var parameter = Expression.Parameter(typeof(TEntity));
             var exprs = new List<Expression>();
-            foreach (var propertyKeyPair in command.RequestPropertyValues)
+            foreach (var propertyKeyPair in propertyCollection)
                 if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
@@ -127,6 +132,19 @@ namespace Rapier.CommandDefinitions
 
             Expression.Lambda<Action<TEntity>>(
                 Expression.Block(exprs), parameter).Compile()(entity);
+        }
+
+        private IDictionary<string, object> UpdatePropertyCollection(
+                IDictionary<string, object> propertyCollection)
+        {
+            if (_discards != null)
+                foreach (var discard in _discards)
+                    propertyCollection.Remove(discard);
+
+            if (_appends != null)
+                propertyCollection.AddRange(_appends);
+
+            return propertyCollection;
         }
     }
 }

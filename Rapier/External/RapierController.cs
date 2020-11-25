@@ -18,7 +18,10 @@ namespace Rapier.External
     {
         private const string ID = "{id}";
         private readonly IMediator _mediator;
-        public RapierController(IMediator mediator) => _mediator = mediator;
+        private readonly SemanticsDefiner.Action<TResponse> _action;
+
+        public RapierController(IMediator mediator, SemanticsDefiner semanticsDefiner)
+            => (_mediator, _action) = (mediator, semanticsDefiner.GetAction<TResponse>());
 
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] TQuery request)
@@ -30,7 +33,7 @@ namespace Rapier.External
         public async Task<IActionResult> Create([FromBody] TCommand request)
             => await _mediator
                 .Send(new CreateCommand<TCommand, TResponse>(request))
-                .ToResult(CreatedAtAction, nameof(GetById));
+                .ToResult(CreatedAtAction, _action.GetById);
 
         [HttpGet, Route(ID)]
         public async Task<IActionResult> GetById(Guid id)

@@ -31,15 +31,18 @@ namespace Rapier.Configuration
             var config = options.Invoke();
 
             if (config.InterfaceDiscovery && config.AssemblyType != null)
-                config.DiscoverInterfacesByEntityName();
+                config.DiscoverInterfacesByEntityName(); // concealed config?
 
             services.AddSingleton(config);
             if (!config.GeneratedControllers)
                 return;
 
+            var actionIntermediary = new ActionIntermediary();
+
             services.AddControllers(o =>
             {
-                o.Conventions.Add(new GenericControllerRouteConvention(config.EntitySettingsCollection));
+                o.Conventions.Add(new GenericControllerRouteConvention(
+                    config.EntitySettingsCollection, actionIntermediary));
                 o.Conventions.Add(new ActionConvention());
                 o.Conventions.Add(new ParameterConvention());
             }).ConfigureApplicationPartManager(m => m.FeatureProviders
@@ -50,6 +53,7 @@ namespace Rapier.Configuration
                 o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
+            services.AddSingleton(actionIntermediary);
         }
 
         public static void AddRapier(this IServiceCollection services)
@@ -58,6 +62,8 @@ namespace Rapier.Configuration
 
             var config = provider.GetRequiredService<RapierConfigurationOptions>();
             var entitySettings = new EntitySettingsContainer(config.EntitySettingsCollection);
+
+            services.AddSingleton<SemanticsDefiner>();
 
             foreach (var handlerType in new HandlerTypesContainer())
                 services.AddScoped(handlerType[0], handlerType[1]);

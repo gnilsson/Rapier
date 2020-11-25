@@ -40,24 +40,6 @@ namespace Rapier.Internal.Utility
             return constructor.Compile();
         }
 
-        public delegate object GenericConstructorDelegate(params object[] args);
-        public static GenericConstructorDelegate CreateGenericConstructor(Type type, Type[] genericParameters, params Type[] parameters)
-        {
-            var constructorInfo = type.MakeGenericType(genericParameters).GetConstructor(parameters);
-            var paramExpr = Expression.Parameter(typeof(object[]));
-
-            var constructorParameters = parameters.Select((paramType, index) =>
-                Expression.Convert(
-                    Expression.ArrayAccess(
-                        paramExpr,
-                        Expression.Constant(index)),
-                    paramType)).ToArray();
-
-            var body = Expression.New(constructorInfo, constructorParameters);
-            var constructor = Expression.Lambda<GenericConstructorDelegate>(body, paramExpr);
-            return constructor.Compile();
-        }
-
         public static IOrderedQueryable<TEntity> OrderBy<TEntity>(
              this IQueryable<TEntity> source,
              OrderByParameter orderParameter)

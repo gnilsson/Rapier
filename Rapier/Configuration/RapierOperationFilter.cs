@@ -6,28 +6,19 @@ namespace Rapier.Configuration
 {
     public class RapierOperationFilter : IOperationFilter
     {
+        private readonly SemanticsDefiner _semanticsDefiner;
+
+        public RapierOperationFilter(SemanticsDefiner semanticsDefiner)
+        {
+            _semanticsDefiner = semanticsDefiner;
+        }
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            //var actionKey = "action";
-            //var controllerKey = "controller";
+            var controllerKey = context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Controller];
+            var actionKey = context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Action];
 
-            //var controller = context.ApiDescription.ActionDescriptor.RouteValues[controllerKey];
-            //var entity = controller.Split('C')[0];
-            //var action = context.ApiDescription.ActionDescriptor.RouteValues[actionKey];
-
-            //if (context.MethodInfo.Name == DefaultActions.Get)
-            //{
-            //    context.ApiDescription.ActionDescriptor.RouteValues[actionKey] = $"{action}{entity}s";
-            //}
-            //else if (context.MethodInfo.Name == DefaultActions.GetById)
-            //{
-            //    var getById = action.Split('B');
-            //    context.ApiDescription.ActionDescriptor.RouteValues[actionKey] = $"{getById[0]}{entity}{getById[1]}";
-            //}
-            //else
-            //{
-            //    context.ApiDescription.ActionDescriptor.RouteValues[actionKey] = $"{action}{entity}";
-            //}
+            if (_semanticsDefiner.ActionNames.TryGetValue($"{controllerKey}.{actionKey}", out var newAction))
+                context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Action] = newAction;
         }
     }
 }

@@ -11,5 +11,6 @@ namespace Rapier.CommandDefinitions
         public Func<TCommand,TEntity> Create { get; }
         public Action<TEntity,TCommand> Update { get; }
         public void Append(params (string, object)[] properties);
+        public void Discard(params string[] propertyNames);
     }
 }
