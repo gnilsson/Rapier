@@ -7,6 +7,7 @@ using Rapier.External.Attributes;
 using Rapier.External.Enums;
 using Rapier.External.Models;
 using Rapier.Internal;
+using Rapier.Internal.Exceptions;
 using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions.Parameters;
@@ -24,6 +25,8 @@ namespace Rapier.Configuration
             this RapierConfigurationOptions config)
         {
             var exportedTypes = config.AssemblyType.Assembly.GetExportedTypes();
+
+            CheckAttributes(exportedTypes);
 
             var entityTypes = GetEntityTypes(exportedTypes);
             var types = GetEntitiesCollectiveTypes(exportedTypes);
@@ -65,7 +68,23 @@ namespace Rapier.Configuration
             return config;
         }
 
-        private static IEnumerable<(Type,QueryParameterAttribute)> GetAllParameters(Type[] exportedTypes)
+        private static void CheckAttributes(Type[] exportedTypes)
+        {
+            var requests = exportedTypes
+                .Where(x => x.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IModifyRequest)));
+
+            var idCollectionAttributes = requests
+                .SelectMany(x => x.GetProperties())
+                .Select(x => x.GetCustomAttribute<IdCollectionAttribute>())
+                .Where(x => x != null);
+
+            if (idCollectionAttributes != null)
+                if (!idCollectionAttributes
+                    .Any(x => x.EntityType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity))))
+                    throw new InvalidConfigurationException("IdCollectionAttribute.EntityType must inherit IEntity.");
+        }
+
+        private static IEnumerable<(Type, QueryParameterAttribute)> GetAllParameters(Type[] exportedTypes)
             => exportedTypes
                 .Where(x => x.IsClass && !x.IsAbstract && x.BaseType
                     .GetInterface(typeof(IParameter).Name) != null)

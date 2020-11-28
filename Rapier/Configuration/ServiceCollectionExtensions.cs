@@ -4,6 +4,7 @@ using MediatR;
 using MediatR.Pipeline;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Rapier.Configuration.Settings;
@@ -63,7 +64,11 @@ namespace Rapier.Configuration
             var config = provider.GetRequiredService<RapierConfigurationOptions>();
             var entitySettings = new EntitySettingsContainer(config.EntitySettingsCollection);
 
-            services.AddSingleton<SemanticsDefiner>();
+            var p = provider.GetRequiredService<IActionDescriptorCollectionProvider>();
+            var s = provider.GetRequiredService<ActionIntermediary>();
+            var semanticsDefiner = new SemanticsDefiner(p, s);
+            services.AddSingleton(semanticsDefiner);
+            //services.AddSingleton<SemanticsDefiner>();
 
             foreach (var handlerType in new HandlerTypesContainer())
                 services.AddScoped(handlerType[0], handlerType[1]);

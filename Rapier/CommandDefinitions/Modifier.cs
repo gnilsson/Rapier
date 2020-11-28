@@ -60,28 +60,26 @@ namespace Rapier.CommandDefinitions
 
             var exprs = new List<MemberAssignment>();
             foreach (var propertyKeyPair in propertyCollection)
-            {
-                var member = typeof(TEntity).GetMember(propertyKeyPair.Key)[0];
-                if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
+                if (command.RequestForeignEntities.TryGetValue(propertyKeyPair.Key, out var foreignEntity))
                 {
-                    var foreignType = typeof(List<>).MakeGenericType(entityType);
-                    var addMethod = foreignType.GetMethod(Methods.Add);
+                    var foreignCollectionType = typeof(List<>).MakeGenericType(foreignEntity);
+                    var addMethod = foreignCollectionType.GetMethod(Methods.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
 
                     var list = Expression.ListInit(
-                        Expression.New(foreignType),
+                        Expression.New(foreignCollectionType),
                         foreignEntities.Select(entity => Expression.ElementInit(
                             addMethod, Expression.Constant(entity))));
 
-                    exprs.Add(Expression.Bind(member, list));
+                    exprs.Add(
+                        Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0], list));
                 }
                 else
                 {
                     exprs.Add(
-                        Expression.Bind(member,
+                        Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0],
                         Expression.Constant(propertyKeyPair.Value)));
                 }
-            }
 
             var now = Expression.Constant(DateTime.UtcNow);
             exprs.AddRange(

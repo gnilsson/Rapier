@@ -8,17 +8,14 @@ namespace Rapier.Configuration
     {
         private readonly SemanticsDefiner _semanticsDefiner;
 
-        public RapierOperationFilter(SemanticsDefiner semanticsDefiner)
-        {
-            _semanticsDefiner = semanticsDefiner;
-        }
+        public RapierOperationFilter(SemanticsDefiner semanticsDefiner) => _semanticsDefiner = semanticsDefiner;
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            var controllerKey = context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Controller];
-            var actionKey = context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Action];
+            var controllerKey = context.ApiDescription.ActionDescriptor.RouteValues[Keys.RouteValue.Controller];
+            var actionKey = context.ApiDescription.ActionDescriptor.RouteValues[Keys.RouteValue.Action];
 
             if (_semanticsDefiner.ActionNames.TryGetValue($"{controllerKey}.{actionKey}", out var newAction))
-                context.ApiDescription.ActionDescriptor.RouteValues[RouteValueKeys.Action] = newAction;
+                context.ApiDescription.ActionDescriptor.RouteValues[Keys.RouteValue.Action] = newAction;
         }
     }
 }

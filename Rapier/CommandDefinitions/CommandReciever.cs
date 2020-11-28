@@ -14,11 +14,13 @@ namespace Rapier.CommandDefinitions
         public Guid Id { get; internal set; }
         public TCommand Command { get; }
         public string IncludeNavigation { get; set; }
+        public IDictionary<string, Type> RequestForeignEntities { get; }
 
         public CommandReciever(TCommand request)
         {
             Command = request;
             RequestPropertyValues = new Dictionary<string, object>();
+            RequestForeignEntities = new Dictionary<string, Type>();
         }
     }
 }

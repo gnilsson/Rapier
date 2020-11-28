@@ -1,5 +1,8 @@
 ﻿using MediatR;
 using Rapier.CommandDefinitions;
+using Rapier.Descriptive;
+using Rapier.External.Attributes;
+using Rapier.External.Enums;
 using Rapier.External.Models;
 using Rapier.Internal;
 using Rapier.Internal.Repositories;
@@ -7,6 +10,7 @@ using Rapier.Internal.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,20 +31,18 @@ namespace Rapier.External.PipelineBehaviours
             RequestHandlerDelegate<TResponse> next)
         {
             foreach (var property in request.Command.GetType().GetProperties())
-                if (property.TryGetPropertyValue(request.Command, out var keyPair))
-                    if (property.PropertyType.BaseType == typeof(List<Guid>))
+                if (TryGetRequestValue(property, request.Command, out var keyPair))
+                    if (property.TryGetAttribute<IdCollectionAttribute>(out var attribute))
                     {
-                        var entityType = property.PropertyType.GetGenericArguments()[0];
-
                         var entities = await MethodFactory.GetManyAsync
-                            .MakeGenericMethod(entityType)
+                            .MakeGenericMethod(attribute.EntityType)
                             .InvokeAsync(
                             _repository,
                             new object[] { keyPair.Value, cancellationToken });
 
-                        var colName = entityType.Name + 's'; // name registration
-                        request.RequestPropertyValues.Add(colName, entities);
-                        request.IncludeNavigation = string.Join(".", colName); // this is not right, right?
+                        request.RequestPropertyValues.Add(keyPair.Key, entities);
+                        request.RequestForeignEntities.Add(keyPair.Key, attribute.EntityType);
+                        request.IncludeNavigation = string.Join(".", keyPair.Key);
                     }
                     else
                     {
@@ -48,6 +50,41 @@ namespace Rapier.External.PipelineBehaviours
                     }
 
             return await next();
+        }
+
+        private static bool TryGetRequestValue(
+            PropertyInfo property,
+            object data,
+            out KeyValuePair<string, object> value)
+        {
+            var attribute = property.GetCustomAttribute<RequestParameterAttribute>();
+            var propertyValue = property.GetValue(data);
+            if (attribute?.Mode == RequestParameterMode.Hidden || propertyValue == null)
+            {
+                value = default;
+                return false;
+            }
+
+            var propertyName = GetPropertyName(property, attribute);
+            value = KeyValuePair.Create(propertyName, propertyValue);
+
+            return propertyValue is not null ||
+                  (propertyValue is int and 0) ||
+                  (propertyValue is string and "");
+        }
+
+        private static string GetPropertyName(PropertyInfo property, RequestParameterAttribute attribute)
+        {
+            var isIdCollection = property.CustomAttributes
+                .Any(x => x.AttributeType == typeof(IdCollectionAttribute));
+
+            var propertyName = attribute == null && isIdCollection ?
+                property.Name.Replace("Id", string.Empty) :
+                attribute == null ?
+                property.Name :
+                attribute.EntityProperty;
+
+            return propertyName;
         }
     }
 }

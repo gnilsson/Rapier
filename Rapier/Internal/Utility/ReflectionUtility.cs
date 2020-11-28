@@ -1,4 +1,6 @@
 ﻿using Rapier.External;
+using Rapier.External.Attributes;
+using Rapier.External.Enums;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -31,16 +33,31 @@ namespace Rapier.Internal.Utility
             return parentInterface != null;
         }
 
-        public static bool TryGetPropertyValue(
+        public static bool TryGetRequestValue(
             this PropertyInfo property,
             object data,
             out KeyValuePair<string, object> value)
         {
-            var propValue = property.GetValue(data);
-            value = KeyValuePair.Create(property.Name, propValue);
-            return propValue is not null ||
-                  (propValue is int and 0) ||
-                  (propValue is string and null or "");
+            var attribute = property.GetCustomAttribute<RequestParameterAttribute>();
+            if (attribute?.Mode == RequestParameterMode.Hidden)
+            {
+                value = default;
+                return false;
+            }
+
+            var propertyValue = property.GetValue(data);
+
+            var propertyName = attribute == null && property.PropertyType == typeof(List<Guid>) ? 
+                property.Name.Replace("Id", string.Empty) : attribute == null ?  
+                property.Name : attribute.EntityProperty;
+
+
+
+            value = KeyValuePair.Create(propertyName, propertyValue);
+
+            return propertyValue is not null ||
+                  (propertyValue is int and 0) ||
+                  (propertyValue is string and "");
         }
 
         public static Type GetFirstClassChild(
@@ -94,6 +111,13 @@ namespace Rapier.Internal.Utility
 
             entity = genericArgs.FirstOrDefault();
             return entity.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity));
+        }
+
+        public static bool TryGetAttribute<T>(this PropertyInfo property, out T attribute)
+            where T : Attribute
+        {
+            attribute = property.GetCustomAttribute<T>();
+            return attribute != null;
         }
     }
 }

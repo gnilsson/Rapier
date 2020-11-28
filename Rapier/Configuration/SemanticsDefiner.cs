@@ -3,25 +3,27 @@ using Rapier.Descriptive;
 using Rapier.Internal.Utility;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace Rapier.Configuration
 {
     public class SemanticsDefiner
     {
-        public IDictionary<string, string> ActionNames { get; }
-        private ICollection<object> Actions { get; }
+        public IReadOnlyDictionary<string, string> ActionNames { get; }
+        private IReadOnlyCollection<object> Actions { get; }
         public SemanticsDefiner(
             IActionDescriptorCollectionProvider actionDescriptors,
             ActionIntermediary actionIntermediary)
         {
-            ActionNames = new Dictionary<string, string>();
-            Actions = new List<object>();
+            var actionNames = new Dictionary<string, string>();
+            var actions = new List<object>();
+
             foreach (var descriptor in actionDescriptors.ActionDescriptors.Items)
             {
-                var controller = descriptor.RouteValues["controller"];
+                var controller = descriptor.RouteValues[Keys.RouteValue.Controller];
                 var entity = controller.Split('C')[0];
-                var action = descriptor.RouteValues["action"];
+                var action = descriptor.RouteValues[Keys.RouteValue.Action];
 
                 Func<string> newAction = action switch
                 {
@@ -30,11 +32,13 @@ namespace Rapier.Configuration
                     {
                         var getById = action.Insert(3, ".").Split('.');
                         return $"{getById[0]}{entity}{getById[1]}";
-                    },
+                    }
+                    ,
                     _ => () => $"{action}{entity}"
                 };
 
-                ActionNames.Add($"{controller}.{action}", newAction());
+                descriptor.RouteValues[Keys.RouteValue.Action] = newAction();
+                actionNames.Add($"{controller}.{action}", newAction());
             }
 
             foreach (var entityActionGroup in actionIntermediary.ActionDescriptions.GroupBy(x => x.ResponseType))
@@ -43,13 +47,16 @@ namespace Rapier.Configuration
                 var newActions = new Dictionary<string, string>();
 
                 foreach (var actionKey in actionKeys)
-                    if (ActionNames.TryGetValue(actionKey, out var newAction))
+                    if (actionNames.TryGetValue(actionKey, out var newAction))
                         newActions.Add(actionKey.Split('.')[1], newAction);
 
-                Actions.Add(ExpressionUtility.CreateConstructor(
+                actions.Add(ExpressionUtility.CreateConstructor(
                     typeof(Action<>).MakeGenericType(entityActionGroup.Key),
                     typeof(IDictionary<string, string>))(newActions));
             }
+
+            ActionNames = new ReadOnlyDictionary<string, string>(actionNames);
+            Actions = new ReadOnlyCollection<object>(actions);
         }
 
         public Action<T> GetAction<T>()
@@ -60,15 +67,10 @@ namespace Rapier.Configuration
         {
             public Action(IDictionary<string, string> actionNames)
             {
-                foreach (var property in this.GetType().GetProperties())
-                    if (actionNames.TryGetValue(property.Name, out var newAction))
-                        property.SetValue(this, newAction);
+                Names = new ReadOnlyDictionary<string, string>(actionNames);
             }
-            public string Get { get; internal set; }
-            public string Create { get; internal set; }
-            public string GetById { get; internal set; }
-            public string Update { get; internal set; }
-            public string Delete { get; internal set; }
+
+            public IReadOnlyDictionary<string, string> Names { get; }
         }
     }
 }

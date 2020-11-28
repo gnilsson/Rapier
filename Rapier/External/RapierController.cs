@@ -33,7 +33,7 @@ namespace Rapier.External
         public async Task<IActionResult> Create([FromBody] TCommand request)
             => await _mediator
                 .Send(new CreateCommand<TCommand, TResponse>(request))
-                .ToResult(CreatedAtAction, _action.GetById);
+                .ToResult(CreatedAtAction, _action.Names[nameof(GetById)]);
 
         [HttpGet, Route(ID)]
         public async Task<IActionResult> GetById(Guid id)

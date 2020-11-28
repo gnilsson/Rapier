@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Rapier.Configuration.Settings;
 using Rapier.Descriptive;
 using Rapier.External.Enums;
 using Rapier.External.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -31,7 +29,8 @@ namespace Rapier.Configuration
         private readonly IEnumerable<IEntitySettings> _settings;
         private ActionIntermediary _actionIntermediary;
 
-        public GenericControllerRouteConvention(IEnumerable<IEntitySettings> settings, ActionIntermediary actionIntermediary)
+        public GenericControllerRouteConvention(
+            IEnumerable<IEntitySettings> settings, ActionIntermediary actionIntermediary)
             => (_settings, _actionIntermediary) = (settings, actionIntermediary);
         public void Apply(ControllerModel controller)
         {
@@ -69,10 +68,10 @@ namespace Rapier.Configuration
                     _ => new ProducesResponseTypeAttribute(setting.ResponseType, 200)
                 });
                 action.Filters.Add(new ProducesResponseTypeAttribute(typeof(NotFoundResult), 404));
+
                 _actionIntermediary.ActionDescriptions.Add(
                     new(setting.ResponseType, action.ActionName, controller.ControllerName));
             };
         }
     }
 }
-

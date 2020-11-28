@@ -1,21 +1,15 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.HttpSys;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Rapier.Configuration;
-using Rapier.Configuration.Settings;
 using Rapier.External.Enums;
-using Rapier.Server.Authorization;
 using Rapier.Server.Config;
 using Rapier.Server.Data;
 using Rapier.Server.Descriptive;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Rapier.Server
 {
@@ -77,7 +71,7 @@ namespace Rapier.Server
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapDefaultControllerRoute();
             });
         }
     }

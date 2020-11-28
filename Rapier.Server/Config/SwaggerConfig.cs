@@ -52,27 +52,9 @@ namespace Rapier.Server.Config
                         Array.Empty<string>()
                     }
                 });
-                x.OperationFilter<RapierOperationFilter>();
+          //      x.OperationFilter<RapierOperationFilter>();
                 x.CustomOperationIds(e => $"{e.ActionDescriptor.RouteValues["action"]}");
             });
-        }
-    }
-
-    public class HmmFilter : FilterDescriptor
-    {
-
-    }
-    
-    public class OpFilter : IOperationFilter
-    {
-        public OpFilter(string hmm)
-        {
-
-        }
-        public void Apply(OpenApiOperation operation, OperationFilterContext context)
-        {
-        //    if(context.MethodInfo.Name == DefaultMethods.)
-       //     var abc = new List<OpenApiTag> { new OpenApiTag { Description = "grpA" } };
         }
     }
 }
