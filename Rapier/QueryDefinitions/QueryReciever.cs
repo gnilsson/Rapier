@@ -1,10 +1,6 @@
-﻿using MediatR;
-using Rapier.External.Models;
-using Rapier.Internal.Utility;
+﻿using Rapier.External.Models;
 using Rapier.QueryDefinitions.Parameters;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Rapier.QueryDefinitions
 {
@@ -17,5 +13,7 @@ namespace Rapier.QueryDefinitions
         public PaginationQuery PaginationQuery { get; set; }
         public string RequestRoute { get; set; }
         public OrderByParameter OrderByParameter { get; set; }
+        public ExpandParameter ExpandParameter { get; set; }
+        public string[] ExpandMembers { get; set; }
     }
 }

@@ -9,6 +9,7 @@ using Rapier.External.Enums;
 using Rapier.Server.Config;
 using Rapier.Server.Data;
 using Rapier.Server.Descriptive;
+using Rapier.Server.Responses;
 using System;
 
 namespace Rapier.Server
@@ -30,10 +31,10 @@ namespace Rapier.Server
                 opt.AssemblyType = typeof(Startup);
 
                 opt.Add(typeof(Blog), "api/blogs")
+                    .ExpandMembersExplicitly(nameof(BlogResponse.Posts))
                     .Authorize(AuthorizationCategory.None, "WorksForRapier")
-                    .Action("Delete")
-                    .Authorize(AuthorizationCategory.Custom);
-
+                    .AuthorizeAction("Delete", AuthorizationCategory.Custom);
+                
                 opt.Add(typeof(Post), "api/posts");
                 opt.Add(typeof(Author), "api/authors");
             });

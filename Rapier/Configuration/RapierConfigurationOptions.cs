@@ -8,25 +8,30 @@ namespace Rapier.Configuration
 {
     public class RapierConfigurationOptions
     {
-        private readonly IList<ActionEndpointSettings> _controllerMethods;
+        //private readonly IList<ActionEndpointSettings> _controllerMethods;
         public Type AssemblyType { get; set; }
         public Type ContextType { get; set; }
         public IEnumerable<IEntitySettings> EntitySettingsCollection { get; set; }
-        public Dictionary<Type, ControllerEndpointSettings> EndpointSettingsCollection { get; }
+        public IDictionary<Type, ControllerEndpointSettings> EndpointSettingsCollection { get; }
         public bool GeneratedControllers { get; set; } = true;
         public bool InterfaceDiscovery { get; set; } = true;
         public bool RoutesByAttribute { get; set; } = false;
         public Type ExtendedRepositoryType { get; set; }
         public PaginationSettings PaginationSettings { get; set; }
-        public bool AutoExpandEntities { get; set; } = true;
+        //public bool AutoExpandEntities { get; set; } = true;
+
+        //public RapierConfigurationOptions()
+        //{
+        //    _controllerMethods = typeof(IRapierController<,>)
+        //        .GetMethods()
+        //        .Select(x => new ActionEndpointSettings(x.Name))
+        //        .ToList();
+        //    EndpointSettingsCollection = new();
+        //}
 
         public RapierConfigurationOptions()
         {
-            _controllerMethods = typeof(IRapierController<,>)
-                .GetMethods()
-                .Select(x => new ActionEndpointSettings(x.Name))
-                .ToList();
-            EndpointSettingsCollection = new();
+            EndpointSettingsCollection = new Dictionary<Type, ControllerEndpointSettings>();
         }
     }
 }

@@ -6,15 +6,15 @@ namespace Rapier.QueryDefinitions.Parameters
 {
     public class OrderByParameter
     {
-        public ListSortDirection SortDirection { get; private set; }
-        public string Node { get; private set; }
-
-        public OrderByParameter(GetRequest orderable)
+        public ListSortDirection SortDirection { get; }
+        public string Node { get; }
+        public OrderByParameter(string orderable)
         {
-            var text = orderable.OrderBy.Split(":");
+            var text = orderable.Split(":");
             if (!text[0].Contains("asc", StringComparison.OrdinalIgnoreCase) &&
                 !text[0].Contains("desc", StringComparison.OrdinalIgnoreCase))
                 return;
+
             SortDirection = text[0].Contains("asc", StringComparison.OrdinalIgnoreCase)
                 ? ListSortDirection.Ascending
                 : ListSortDirection.Descending;

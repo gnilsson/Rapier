@@ -23,15 +23,15 @@ namespace Rapier.Internal.Repositories
 
         private readonly IMapper _mapper;
         private readonly Func<IQueryable<TEntity>, OrderByParameter, IOrderedQueryable<TEntity>> _orderer;
-        private readonly Func<IQueryable<TEntity>, IQueryable<TEntity>> _includer;
+        private readonly string[] _expandMembers;
         private readonly QueryInstructions<TEntity>.QueryDelegate _querier;
         public Repository(
             TContext context,
             IMapper mapper,
             QueryManager<TEntity> queryManager) :
             base(context) =>
-            (_mapper, _orderer, _includer, _querier) =
-            (mapper, queryManager.Orderer, queryManager.Includer, queryManager.Querier);
+            (_mapper, _orderer, _expandMembers, _querier) =
+            (mapper, queryManager.Orderer, queryManager.ExpandMembers, queryManager.Querier);
 
         private DbSet<TEntity> Set()
             => DbContext.Set<TEntity>();
@@ -48,10 +48,10 @@ namespace Rapier.Internal.Repositories
                 query = _orderer(query, queryReciever.OrderByParameter);
 
             return new QueryResult<TResponse>(
-                count,
-                await query
+                count, await query
                 .ApplyPaging(queryReciever.PaginationQuery)
-                .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
+                .ProjectTo<TResponse, TEntity>(
+                    _mapper.ConfigurationProvider, queryReciever.ExpandMembers ?? _expandMembers)
                 .ToListAsync(token));
         }
 
@@ -61,7 +61,7 @@ namespace Rapier.Internal.Repositories
           => await SetQuery()
                     .AsNoTracking()
                     .Where(predicate)
-                    .ProjectTo<TResponse>(_mapper.ConfigurationProvider)
+                    .ProjectTo<TResponse, TEntity>(_mapper.ConfigurationProvider, _expandMembers)
                     .FirstOrDefaultAsync(token);
 
         public async ValueTask<TEntity> FindAsync(
@@ -91,6 +91,7 @@ namespace Rapier.Internal.Repositories
         public async Task CreateAsync(
             TEntity entity, CancellationToken token)
            => await Set().AddAsync(entity, token);
+
 
 
     }

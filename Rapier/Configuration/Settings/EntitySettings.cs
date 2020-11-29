@@ -13,10 +13,12 @@ namespace Rapier.Configuration.Settings
         public string ControllerName { get; set; }
         public Type QueryRequestType { get; set; }
         public Type CommandRequestType { get; set; }
-        public Type QueryConfiguration { get; set; }
-        public IDictionary<string, Type> Parameters { get; set; }
-        public Type Validator { get; set; }
+        public Type QueryConfigurationType { get; set; }
+        public IDictionary<string, Type> ParameterTypes { get; set; }
+        public Type ValidatorType { get; set; }
         public IDictionary<string, AuthorizeableEndpoint> AuthorizeableEndpoints { get; set; }
-        public Type[] RegisteredForeignEntities { get; set; }
+        public bool AutoExpandMembers { get; set; } = true;
+        public string[] ExplicitExpandedMembers { get; set; }
+        public string[] ResponseMembers { get; set; }
     }
 }

@@ -62,6 +62,11 @@ namespace Rapier.Internal.Utility
             return (IOrderedQueryable<TEntity>)source.Provider.CreateQuery<TEntity>(callExpr);
         }
 
+        //public static Expression<Func<TResponse,object>>[] ExpandMembers<TResponse>(ICollection<string[]> details)
+        //{
+
+        //}
+
         public static IQueryable<TEntity> IncludeBy<TEntity>(
             this IQueryable<TEntity> source,
             ICollection<string[]> details)

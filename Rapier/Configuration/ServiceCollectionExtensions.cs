@@ -64,10 +64,7 @@ namespace Rapier.Configuration
             var config = provider.GetRequiredService<RapierConfigurationOptions>();
             var entitySettings = new EntitySettingsContainer(config.EntitySettingsCollection);
 
-            var p = provider.GetRequiredService<IActionDescriptorCollectionProvider>();
-            var s = provider.GetRequiredService<ActionIntermediary>();
-            var semanticsDefiner = new SemanticsDefiner(p, s);
-            services.AddSingleton(semanticsDefiner);
+
             //services.AddSingleton<SemanticsDefiner>();
 
             foreach (var handlerType in new HandlerTypesContainer())
@@ -83,13 +80,14 @@ namespace Rapier.Configuration
                 new Dictionary<string,
                 IReadOnlyDictionary<string,
                 ExpressionUtility.ConstructorDelegate>>();
+            var expandeableMembers = new Dictionary<Type, string[]>();
 
             foreach (var setting in entitySettings)
             {
                 var entityTypes = new EntityTypes(setting);
 
                 var parameterDict = new Dictionary<string, ExpressionUtility.ConstructorDelegate>();
-                foreach (var parameter in setting.Parameters)
+                foreach (var parameter in setting.ParameterTypes)
                     parameterDict.Add(
                         parameter.Key,
                         ExpressionUtility.CreateConstructor(parameter.Value, typeof(string)));
@@ -97,7 +95,7 @@ namespace Rapier.Configuration
                 fullParameters.Add(setting.QueryRequestType.Name, new ReadOnlyDictionary<string,
                     ExpressionUtility.ConstructorDelegate>(parameterDict));
 
-                services.AddTransient(typeof(IValidator<>).MakeGenericType(setting.CommandRequestType), setting.Validator);
+                services.AddTransient(typeof(IValidator<>).MakeGenericType(setting.CommandRequestType), setting.ValidatorType);
 
                 var properties = entityTypes
                     .GetType()
@@ -107,12 +105,15 @@ namespace Rapier.Configuration
                     if (property.GetValue(entityTypes) is Type[] handler)
                         services.AddScoped(handler[0], handler[1]);
 
-                var queryConfigType = entityTypes.QueryConfiguration ?? typeof(DefaultQueryConfiguration);
-                var queryConfig = ExpressionUtility.CreateEmptyConstructor(queryConfigType);
+                var queryConfigConstructor = ExpressionUtility.CreateConstructor(
+                    typeof(QueryConfiguration<>).MakeGenericType(setting.EntityType),
+                    typeof(ICollection<string>));
                 var queryManagerConstructor = ExpressionUtility.CreateConstructor(
                     typeof(QueryManager<>).MakeGenericType(setting.EntityType),
                     typeof(IQueryConfiguration));
-                var queryManager = queryManagerConstructor(queryConfig());
+
+                var queryConfig = queryConfigConstructor(setting.ExplicitExpandedMembers?.ToList());
+                var queryManager = queryManagerConstructor(queryConfig);
 
                 var repositoryConstructor = ExpressionUtility.CreateConstructor(
                     (config.ExtendedRepositoryType ?? typeof(Repository<,,>))
@@ -124,7 +125,14 @@ namespace Rapier.Configuration
                 repositories.Add(
                     setting.EntityType.Name,
                     new RepositoryConstructContainer(repositoryConstructor, queryManager));
+
+                expandeableMembers.Add(setting.ResponseType, setting.ResponseMembers);
             }
+
+            services.AddSingleton(new SemanticsDefiner(
+                provider.GetRequiredService<IActionDescriptorCollectionProvider>(),
+                provider.GetRequiredService<ActionIntermediary>(),
+                expandeableMembers));
 
             var queryConfigContainer =
                 new ReadOnlyDictionary<string,

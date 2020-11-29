@@ -25,9 +25,6 @@ namespace Rapier.CommandDefinitions
         private readonly MemberInfo _createdMember;
         private readonly MemberInfo _updatedMember;
 
-        public Func<TCommand, TEntity> Create { get; }
-        public Action<TEntity, TCommand> Update { get; }
-
         public Modifier()
         {
             Create = CreateHandle;
@@ -38,6 +35,9 @@ namespace Rapier.CommandDefinitions
             _createdMember = typeof(TEntity).GetMember(nameof(IEntity.CreatedDate))[0];
             _updatedMember = typeof(TEntity).GetMember(nameof(IEntity.UpdatedDate))[0];
         }
+
+        public Func<TCommand, TEntity> Create { get; }
+        public Action<TEntity, TCommand> Update { get; }
 
         public void Discard(params string[] propertyNames)
         {
@@ -102,10 +102,10 @@ namespace Rapier.CommandDefinitions
             var parameter = Expression.Parameter(typeof(TEntity));
             var exprs = new List<Expression>();
             foreach (var propertyKeyPair in propertyCollection)
-                if (propertyKeyPair.Value.IsEntityCollection(out var entityType))
+                if (command.RequestForeignEntities.TryGetValue(propertyKeyPair.Key, out var foreignEntity))
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
-                    var foreignType = typeof(ICollection<>).MakeGenericType(entityType);
+                    var foreignType = typeof(ICollection<>).MakeGenericType(foreignEntity);
                     var addMethod = foreignType.GetMethod(Methods.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
                     var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;

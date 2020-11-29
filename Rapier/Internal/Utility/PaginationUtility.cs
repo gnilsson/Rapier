@@ -47,11 +47,5 @@ namespace Rapier.Internal.Utility
                 Total = total
             };
         }
-
-        public static IQueryable<T> ApplyPaging<T>(this IQueryable<T> efQuery,
-                                                        IPaginateable pagination)
-            => efQuery
-                   .Skip((pagination.PageNumber - 1) * pagination.PageSize)
-                   .Take(pagination.PageSize);
     }
 }

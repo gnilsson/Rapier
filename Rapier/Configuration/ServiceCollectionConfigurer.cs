@@ -31,6 +31,7 @@ namespace Rapier.Configuration
             var entityTypes = GetEntityTypes(exportedTypes);
             var types = GetEntitiesCollectiveTypes(exportedTypes);
             var parameters = GetAllParameters(exportedTypes);
+            var simplifiedResponseMembers = GetSimplifiedResponseMembers(types);
 
             var entitySettings = new List<IEntitySettings>();
             foreach (var entityType in entityTypes)
@@ -54,18 +55,38 @@ namespace Rapier.Configuration
                     ResponseType = responseType,
                     QueryRequestType = queryRequestType,
                     CommandRequestType = commandRequestType,
-                    QueryConfiguration = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
+                    QueryConfigurationType = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
                     ControllerRoute = controllerEndpoint.Route,
                     ControllerName = controllerType.AssemblyQualifiedName,
-                    Parameters = GetParameters(parameters, entityType.Name),
-                    Validator = GetValidator(exportedTypes, commandRequestType),
+                    ParameterTypes = GetParameters(parameters, entityType.Name),
+                    ValidatorType = GetValidator(exportedTypes, commandRequestType),
                     AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint, controllerType),
+                    AutoExpandMembers = controllerEndpoint.AutoExpandMembers,
+                    ExplicitExpandedMembers = controllerEndpoint.ExplicitExpandedMembers,
+                    ResponseMembers = simplifiedResponseMembers[responseType]
                 });
             }
 
             config.ExtendedRepositoryType = exportedTypes.FirstOrDefault(x => x.BaseType == typeof(Repository<,,>));
             config.EntitySettingsCollection = entitySettings;
             return config;
+        }
+
+        private static IDictionary<Type, string[]> GetSimplifiedResponseMembers(IEnumerable<Type> types)
+        {
+            var responses = types.Where(x => x.BaseType == typeof(EntityResponse));
+            var dict = new Dictionary<Type, string[]>();
+
+            foreach (var response in responses)
+                dict.Add(response, response.GetProperties()
+                    .Select(x => (x.Name, x.PropertyType.GetTypeInfo()))
+                    .Where(x => x.Item2.GenericTypeArguments != Array.Empty<Type>())
+                    .Select(x => (x, x.Item2.GetGenericArguments()[0]))
+                    .Where(x => x.Item2.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ISimplified)))
+                    .Select(x => x.x.Name)
+                    .ToArray());
+
+            return dict;
         }
 
         private static void CheckAttributes(Type[] exportedTypes)

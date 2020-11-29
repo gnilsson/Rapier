@@ -21,7 +21,7 @@ namespace Rapier.Configuration
         public Type[] DeleteHandler { get; set; }
         public EntityTypes(IEntitySettings setting)
         {
-            QueryConfiguration = setting.QueryConfiguration;
+            QueryConfiguration = setting.QueryConfigurationType;
 
             var getQuery = typeof(GetQuery<,>)
                 .MakeGenericType(setting.QueryRequestType, setting.ResponseType);

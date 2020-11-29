@@ -22,15 +22,24 @@ namespace Rapier.Configuration
                 .ToList();
         }
 
-        public static ControllerEndpointSettings Add(this RapierConfigurationOptions options, 
+        public static ControllerEndpointSettings Add(this RapierConfigurationOptions options,
             Type entityType, string route)
         {
             var controller = new ControllerEndpointSettings
-            { 
-                Route = route, 
-                ActionSettingsCollection = _controllerMethods 
+            {
+                Route = route,
+                ActionSettingsCollection = _controllerMethods
             };
             options.EndpointSettingsCollection.Add(entityType, controller);
+            return controller;
+        }
+
+        public static ControllerEndpointSettings AuthorizeAction(this ControllerEndpointSettings controller,
+            string actionMethodName, AuthorizationCategory category, string policy = null)
+        {
+            controller.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod
+                .EndsWith(actionMethodName, StringComparison.OrdinalIgnoreCase))
+                .Authorize(category, policy);
             return controller;
         }
 
@@ -46,8 +55,17 @@ namespace Rapier.Configuration
             return endpoint;
         }
 
-        public static ActionEndpointSettings Action(this ControllerEndpointSettings controller, string actionMethodName)
-            => controller.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod
-                .EndsWith(actionMethodName, StringComparison.OrdinalIgnoreCase));
+        //public static ActionEndpointSettings Action(this ControllerEndpointSettings controller, string actionMethodName)
+        //    => controller.ActionSettingsCollection.FirstOrDefault(x => x.ActionMethod
+        //        .EndsWith(actionMethodName, StringComparison.OrdinalIgnoreCase));
+
+        public static ControllerEndpointSettings ExpandMembersExplicitly(
+            this ControllerEndpointSettings controller,
+            params string[] members)
+        {
+            controller.AutoExpandMembers = false;
+            controller.ExplicitExpandedMembers = members;
+            return controller;
+        }
     }
 }

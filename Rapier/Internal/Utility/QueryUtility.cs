@@ -1,4 +1,9 @@
-﻿using System.Linq.Expressions;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using Rapier.External.Models;
+using System;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace Rapier.Internal.Utility
 {
@@ -30,5 +35,18 @@ namespace Rapier.Internal.Utility
                 Expression.Call(
                     members.Expressions[0], MethodFactory.CompareTo, value));
         }
+
+        public static IQueryable<TResponse> ProjectTo<TResponse, TEntity>(this IQueryable<TEntity> query,
+            IConfigurationProvider config, params string[] expandMembers)
+            => expandMembers == null || expandMembers.Length == 0 ?
+            query.ProjectTo<TResponse>(config) :
+            query.ProjectTo<TResponse>(config, null, expandMembers);
+
+
+        public static IQueryable<TEntity> ApplyPaging<TEntity>(this IQueryable<TEntity> efQuery,
+            IPaginateable pagination)
+            => efQuery
+            .Skip((pagination.PageNumber - 1) * pagination.PageSize)
+            .Take(pagination.PageSize);
     }
 }
