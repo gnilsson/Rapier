@@ -3,9 +3,6 @@
     public abstract class RepositoryConcept<TContext>
     {
         internal TContext DbContext { get; }
-        public RepositoryConcept(TContext context)
-        {
-            DbContext = context;
-        }
+        public RepositoryConcept(TContext context) => DbContext = context;
     }
 }

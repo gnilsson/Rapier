@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Rapier.Configuration;
+using Rapier.Descriptive;
 using Rapier.External.Enums;
 using Rapier.Server.Config;
 using Rapier.Server.Data;
@@ -32,8 +33,8 @@ namespace Rapier.Server
 
                 opt.Add(typeof(Blog), "api/blogs")
                     .ExpandMembersExplicitly(nameof(BlogResponse.Posts))
-                    .Authorize(AuthorizationCategory.None, "WorksForRapier")
-                    .AuthorizeAction("Delete", AuthorizationCategory.Custom);
+                    .Authorize(AuthorizationCategory.None, AuthorizationPolicies.WorksForRapier)
+                    .AuthorizeAction(DefaultActions.Delete, AuthorizationCategory.Custom);
                 
                 opt.Add(typeof(Post), "api/posts");
                 opt.Add(typeof(Author), "api/authors");

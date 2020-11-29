@@ -1,6 +1,6 @@
 ﻿namespace Rapier.Descriptive
 {
-    public static class HttpContentType
+    public static class HttpContentTypes
     {
         public const string ApplicationJson = "application/json";
     }

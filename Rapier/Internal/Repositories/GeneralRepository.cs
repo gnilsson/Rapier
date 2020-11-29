@@ -15,31 +15,14 @@ namespace Rapier.Internal.Repositories
                  where TContext : DbContext
     {
 
-        public GeneralRepository(
-            TContext dbContext)
-            : base(dbContext)
+        public GeneralRepository(TContext dbContext) : base(dbContext)
         { }
 
         private DbSet<TEntity> Set<TEntity>() where TEntity : class
             => DbContext.Set<TEntity>();
-        //private DbSet<Entity> Set(Type entityType)
-        //    => (DbSet<Entity>)typeof(DbContext)
-        //    .GetMethod("Set")
-        //    .MakeGenericMethod(entityType)
-        //    .Invoke(DbContext, null);
-
 
         private IQueryable<TEntity> SetQuery<TEntity>() where TEntity : class
             => DbContext.Set<TEntity>();
-
-        //public async Task<TDto> GetFirstByConditionAsync<TDto, TEntity>(
-        //                      Expression<Func<TEntity, bool>> predicate)
-        //                      where TEntity : class
-        //    => await SetQuery<TEntity>()
-        //            .AsNoTracking()
-        //            .Where(predicate)
-        //            .ProjectTo<TDto>(_mapper.ConfigurationProvider)
-        //            .FirstOrDefaultAsync();
 
         public async Task<TEntity> GetFirstByConditionAsync<TEntity>(
             Expression<Func<TEntity, bool>> predicate,
@@ -47,8 +30,7 @@ namespace Rapier.Internal.Repositories
             where TEntity : class
             => await SetQuery<TEntity>()
                     .AsNoTracking()
-                    .Where(predicate)
-                    .FirstOrDefaultAsync(token);
+                    .FirstOrDefaultAsync(predicate, token);
 
         public IQueryable<TEntity> FindByCondition<TEntity>(
             Expression<Func<TEntity, bool>> predicate)
@@ -60,10 +42,6 @@ namespace Rapier.Internal.Repositories
             CancellationToken token)
             where TEntity : class, IEntity
           => await Set<TEntity>().FindAsync(new object[] { entityId }, token);
-        //public async ValueTask<IEntity> FindAsync(
-        //    Type entityType,
-        //    Guid entityId)
-        //=> await Set(entityType).FindAsync(entityId);
 
         public async Task<List<TEntity>> GetManyAsync<TEntity>(
             IEnumerable<Guid> entityIds,
@@ -72,14 +50,14 @@ namespace Rapier.Internal.Repositories
              => await FindByCondition<TEntity>(e => entityIds.Contains(e.Id))
                 .ToListAsync(token);
 
-        //public async Task<List<TEntity>> GetManyAsync<TEntity>(
-        //    IEnumerable<Guid> entityIds,
-        //    string includeNavigation,
-        //    CancellationToken token)
-        //    where TEntity : class, IEntity
-        //     => await FindByCondition<TEntity>(e => entityIds.Contains(e.Id))
-        //        .Include(includeNavigation)
-        //        .ToListAsync(token);
+        public async Task<List<TEntity>> GetManyAsync<TEntity>(
+            IEnumerable<Guid> entityIds,
+            string includeNavigation,
+            CancellationToken token)
+            where TEntity : class, IEntity
+             => await FindByCondition<TEntity>(e => entityIds.Contains(e.Id))
+                .Include(includeNavigation)
+                .ToListAsync(token);
 
         public async Task CreateAsync<TEntity>(
             TEntity entity, CancellationToken token)
@@ -95,7 +73,5 @@ namespace Rapier.Internal.Repositories
             TEntity entity)
             where TEntity : class
            => Set<TEntity>().Remove(entity);
-
-
     }
 }

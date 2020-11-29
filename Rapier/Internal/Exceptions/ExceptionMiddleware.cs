@@ -38,13 +38,12 @@ namespace Rapier.Internal.Exceptions
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            context.Response.ContentType = HttpContentType.ApplicationJson;
+            context.Response.ContentType = HttpContentTypes.ApplicationJson;
             var error = exception switch
             {
                 BadRequestException ex => GetBadRequest(context, new[] { ex.Message }),
                 ValidationException ex => GetBadRequest(context, ex.Errors.Select(x => x.ErrorMessage)),
                 _ => GetInternal(context)
-
             };
             return context.Response.WriteAsync(error.ToString());
         }
@@ -56,7 +55,7 @@ namespace Rapier.Internal.Exceptions
             {
                 StatusCode = context.Response.StatusCode,
                 Message = "Bad Request",
-                Details = messages ?? null
+                Details = messages
             };
         }
 

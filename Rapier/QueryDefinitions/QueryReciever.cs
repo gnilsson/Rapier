@@ -13,7 +13,6 @@ namespace Rapier.QueryDefinitions
         public PaginationQuery PaginationQuery { get; set; }
         public string RequestRoute { get; set; }
         public OrderByParameter OrderByParameter { get; set; }
-        public ExpandParameter ExpandParameter { get; set; }
         public string[] ExpandMembers { get; set; }
     }
 }

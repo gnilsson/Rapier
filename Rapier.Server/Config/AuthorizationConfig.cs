@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Rapier.Server.Authorization;
+using Rapier.Server.Descriptive;
 
 namespace Rapier.Server.Config
 {
@@ -10,7 +11,7 @@ namespace Rapier.Server.Config
         {
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("WorksForRapier", policy =>
+                options.AddPolicy(AuthorizationPolicies.WorksForRapier, policy =>
                 {
                     policy.AddRequirements(new WorksForCompanyRequirement("RapierDemoCompany"));
                 });

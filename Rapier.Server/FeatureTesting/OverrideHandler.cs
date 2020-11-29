@@ -3,7 +3,6 @@ using Rapier.External.Handlers;
 using Rapier.External.Models;
 using Rapier.Internal.Repositories;
 using Rapier.Server.Data;
-using Rapier.Server.QueryConfiguration;
 using Rapier.Server.Responses;
 using Rapier.Services;
 using System.Threading;
@@ -13,7 +12,8 @@ namespace Rapier.Server.FeatureTesting
 {
     public class OverrideHandler : GetHandler<Blog, BlogQuery, BlogResponse>
     {
-        public OverrideHandler(IRepositoryWrapper repositoryWrapper, IMapper mapping, IUriService uriService) : base(repositoryWrapper, mapping, uriService)
+        public OverrideHandler(IRepositoryWrapper repositoryWrapper, IMapper mapping, IUriService uriService) 
+            : base(repositoryWrapper, mapping, uriService)
         {
         }
 
