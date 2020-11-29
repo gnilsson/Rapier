@@ -17,8 +17,8 @@ namespace Rapier.Configuration
         public Type[] CreateValidator { get; }
         public Type[] UpdateValidator { get; }
         public Type[] UpdateHandler { get; }
-        public Type[] GetByIdHandler { get; set; }
-        public Type[] DeleteHandler { get; set; }
+        public Type[] GetByIdHandler { get; }
+        public Type[] DeleteHandler { get; }
         public EntityTypes(IEntitySettings setting)
         {
             QueryConfiguration = setting.QueryConfigurationType;

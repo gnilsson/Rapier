@@ -44,8 +44,6 @@ namespace Rapier.Configuration
             {
                 o.Conventions.Add(new GenericControllerRouteConvention(
                     config.EntitySettingsCollection, actionIntermediary));
-                o.Conventions.Add(new ActionConvention());
-                o.Conventions.Add(new ParameterConvention());
             }).ConfigureApplicationPartManager(m => m.FeatureProviders
                 .Add(new GenericTypeControllerFeatureProvider(config.EntitySettingsCollection)))
             .AddJsonOptions(o =>
@@ -68,9 +66,6 @@ namespace Rapier.Configuration
             foreach (var handlerType in new HandlerTypesContainer())
                 services.AddScoped(handlerType[0], handlerType[1]);
 
-            var queryConfigurations =
-                new Dictionary<string,
-                ExpressionUtility.EmptyConstructorDelegate>();
             var repositories =
                 new Dictionary<string,
                 RepositoryConstructContainer>();

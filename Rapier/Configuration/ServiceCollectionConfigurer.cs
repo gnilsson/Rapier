@@ -24,7 +24,7 @@ namespace Rapier.Configuration
         public static RapierConfigurationOptions DiscoverInterfacesByEntityName(
             this RapierConfigurationOptions config)
         {
-            var exportedTypes = config.AssemblyType.Assembly.GetExportedTypes();
+            var exportedTypes = config.ContextType.Assembly.GetExportedTypes();
 
             CheckAttributes(exportedTypes);
 

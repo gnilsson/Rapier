@@ -25,6 +25,7 @@ namespace Rapier.Internal.Repositories
         private readonly Func<IQueryable<TEntity>, OrderByParameter, IOrderedQueryable<TEntity>> _orderer;
         private readonly string[] _expandMembers;
         private readonly QueryInstructions<TEntity>.QueryDelegate _querier;
+
         public Repository(
             TContext context,
             IMapper mapper,
@@ -41,15 +42,15 @@ namespace Rapier.Internal.Repositories
             QueryReciever queryReciever, CancellationToken token)
         {
             var query = SetQuery().AsNoTracking();
-            var count = await query.CountAsync(token);
+
             if (queryReciever.Parameters.Count > 0)
                 query = query.Where(_querier(queryReciever.Parameters));
             if (queryReciever.OrderByParameter != null)
                 query = _orderer(query, queryReciever.OrderByParameter);
 
             return new QueryResult<TResponse>(
-                count, await query
-                .ApplyPaging(queryReciever.PaginationQuery)
+                await query.CountAsync(token), 
+                await query.ApplyPaging(queryReciever.PaginationQuery)
                 .ProjectTo<TResponse, TEntity>(
                     _mapper.ConfigurationProvider, queryReciever.ExpandMembers ?? _expandMembers)
                 .ToListAsync(token));

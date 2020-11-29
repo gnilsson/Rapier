@@ -3,7 +3,6 @@ using Rapier.Configuration.Settings;
 using Rapier.External;
 using Rapier.External.Models;
 using Rapier.Internal.Utility;
-using System;
 
 namespace Rapier.Configuration
 {
@@ -28,7 +27,9 @@ namespace Rapier.Configuration
 
                 foreach (var setting in _settings)
                 {
-                    cfg.CreateMap(setting.EntityType, setting.ResponseType).ForMemberExplicitExpansion(setting);
+                    cfg.CreateMap(setting.EntityType, setting.ResponseType)
+                       .ForMembersExplicitExpansion(setting);
+
                     if (setting.ResponseType.ParentHasInterface(typeof(ISimplified), out var parent))
                         cfg.CreateMap(setting.EntityType, parent).As(setting.ResponseType);
                 }
@@ -40,7 +41,7 @@ namespace Rapier.Configuration
 
     public static class MappingExtensions
     {
-        public static IMappingExpression ForMemberExplicitExpansion(
+        public static IMappingExpression ForMembersExplicitExpansion(
             this IMappingExpression map, IEntitySettings setting)
         {
             if (!setting.AutoExpandMembers)

@@ -52,9 +52,7 @@ namespace Rapier.External.PipelineBehaviours
             return await next();
         }
 
-        private static bool TryGetRequestValue(
-            PropertyInfo property,
-            object data,
+        private static bool TryGetRequestValue(PropertyInfo property, object data,
             out KeyValuePair<string, object> value)
         {
             var attribute = property.GetCustomAttribute<RequestParameterAttribute>();
@@ -73,16 +71,16 @@ namespace Rapier.External.PipelineBehaviours
                   (propertyValue is string and "");
         }
 
-        private static string GetPropertyName(PropertyInfo property, RequestParameterAttribute attribute)
+        private static string GetPropertyName(PropertyInfo property, RequestParameterAttribute parameterAttribute)
         {
             var isIdCollection = property.CustomAttributes
                 .Any(x => x.AttributeType == typeof(IdCollectionAttribute));
 
-            var propertyName = attribute == null && isIdCollection ?
+            var propertyName = parameterAttribute == null && isIdCollection ?
                 property.Name.Replace("Id", string.Empty) :
-                attribute == null ?
+                parameterAttribute == null ?
                 property.Name :
-                attribute.EntityProperty;
+                parameterAttribute.EntityProperty;
 
             return propertyName;
         }

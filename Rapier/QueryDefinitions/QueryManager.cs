@@ -13,7 +13,7 @@ namespace Rapier.QueryDefinitions
         public string[] ExpandMembers { get; }
         public QueryManager(IQueryConfiguration config)
         {
-            var instructions = new QueryInstructions<TEntity>(config);
+            var instructions = new QueryInstructions<TEntity>();
             Querier = instructions.Query;
             Orderer = instructions.Order;
             ExpandMembers = config.ExpandMembers?.ToArray();

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Rapier.External;
 using Rapier.External.Models;
 using System;
 using System.Linq;
@@ -36,12 +37,28 @@ namespace Rapier.Internal.Utility
                     members.Expressions[0], MethodFactory.CompareTo, value));
         }
 
+        public static Expression<Func<TEntity, bool>> AndAlso<TEntity>(
+                Expression<Func<TEntity, bool>> expr1,
+                Expression<Func<TEntity, bool>> expr2)
+                where TEntity : class, IEntity
+        {
+            ParameterExpression param = expr1.Parameters[0];
+            if (ReferenceEquals(param, expr2.Parameters[0]))
+            {
+                return Expression.Lambda<Func<TEntity, bool>>(
+                    Expression.AndAlso(expr1.Body, expr2.Body), param);
+            }
+            return Expression.Lambda<Func<TEntity, bool>>(
+                Expression.AndAlso(
+                    expr1.Body,
+                    Expression.Invoke(expr2, param)), param);
+        }
+
         public static IQueryable<TResponse> ProjectTo<TResponse, TEntity>(this IQueryable<TEntity> query,
             IConfigurationProvider config, params string[] expandMembers)
             => expandMembers == null || expandMembers.Length == 0 ?
             query.ProjectTo<TResponse>(config) :
             query.ProjectTo<TResponse>(config, null, expandMembers);
-
 
         public static IQueryable<TEntity> ApplyPaging<TEntity>(this IQueryable<TEntity> efQuery,
             IPaginateable pagination)

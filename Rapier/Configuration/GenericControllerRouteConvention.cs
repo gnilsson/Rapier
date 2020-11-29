@@ -10,19 +10,19 @@ using System.Linq;
 
 namespace Rapier.Configuration
 {
-    public class ActionConvention : IActionModelConvention
-    {
-        public void Apply(ActionModel action)
-        {
-        }
-    }
+    //public class ActionConvention : IActionModelConvention
+    //{
+    //    public void Apply(ActionModel action)
+    //    {
+    //    }
+    //}
 
-    public class ParameterConvention : IParameterModelConvention
-    {
-        public void Apply(ParameterModel parameter)
-        {
-        }
-    }
+    //public class ParameterConvention : IParameterModelConvention
+    //{
+    //    public void Apply(ParameterModel parameter)
+    //    {
+    //    }
+    //}
 
     public class GenericControllerRouteConvention : IControllerModelConvention
     {
@@ -32,6 +32,7 @@ namespace Rapier.Configuration
         public GenericControllerRouteConvention(
             IEnumerable<IEntitySettings> settings, ActionIntermediary actionIntermediary)
             => (_settings, _actionIntermediary) = (settings, actionIntermediary);
+
         public void Apply(ControllerModel controller)
         {
             if (!controller.ControllerType.IsGenericType)
