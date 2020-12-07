@@ -18,7 +18,6 @@ namespace Rapier.External.Handlers
         internal readonly IRepository<TEntity, TResponse> _repository;
         internal readonly IMapper _mapper;
         internal readonly IUriService _uriService;
-        //  private readonly ILogger _logger;
 
         public GetHandler(
             IRepositoryWrapper repositoryWrapper,
@@ -31,10 +30,10 @@ namespace Rapier.External.Handlers
             TRequest request,
             CancellationToken cancellationToken)
         {
-            var queryData = await _repository.GetQueriedResultAsync(request, cancellationToken);
+            var queryData = await _repository.GetQueriedResultAsync(
+                request, cancellationToken);
             return PaginationUtility.CreatePaginatedResponse(
-                _uriService, request.PaginationQuery,
-                queryData.Items, request.RequestRoute, queryData.Total);
+                _uriService, request, queryData.Items, queryData.Total);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Rapier.Configuration;
 using Rapier.Configuration.Settings;
 using Rapier.Internal.Utility;
@@ -12,6 +13,14 @@ using System.Threading.Tasks;
 
 namespace Rapier.External.PipelineBehaviours
 {
+    //public class flerp : IModelBinderProvider
+    //{
+    //    public IModelBinder GetBinder(ModelBinderProviderContext context)
+    //    {
+    //        context.Metadata.
+    //        throw new System.NotImplementedException();
+    //    }
+    //}
     internal sealed class ProvideQueryBehaviour<TRequest, TResponse> :
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : QueryReciever
@@ -30,6 +39,7 @@ namespace Rapier.External.PipelineBehaviours
             _httpContext = accessor.HttpContext;
             _querySemantics = semanticsDefiner.GetQuery<TResponse>();
         }
+
         public async Task<TResponse> Handle(
             TRequest request,
             CancellationToken cancellationToken,
@@ -50,11 +60,10 @@ namespace Rapier.External.PipelineBehaviours
                 null : new OrderByParameter(request.Query.OrderBy);
 
             if (!string.IsNullOrWhiteSpace(request.Query.Expand))
-            {
-                var members = request.Query.Expand.Split('.');
-                if (members.All(x => _querySemantics.Members.Contains(x)))
-                    request.ExpandMembers = members;
-            }
+                request.ExpandMembers = request.Query.Expand
+                    .Split('.')
+                    .Where(x => _querySemantics.Members.Contains(x))
+                    .ToArray();
 
             return await next();
         }

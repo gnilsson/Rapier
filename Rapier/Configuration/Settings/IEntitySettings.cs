@@ -6,18 +6,18 @@ namespace Rapier.Configuration.Settings
 {
     public interface IEntitySettings
     {
-        public Type EntityType { get; set; }
-        public Type ResponseType { get; set; }
-        public Type SimplifiedResponseType { get; set; }
-        public string ControllerRoute { get; set; }
-        public Type QueryRequestType { get; set; }
-        public Type CommandRequestType { get; set; }
-        public Type QueryConfigurationType { get; set; }
-        public IDictionary<string, Type> ParameterTypes { get; set; }
-        public Type ValidatorType { get; set; }
-        public IDictionary<string, AuthorizeableEndpoint> AuthorizeableEndpoints { get; set; }
-        public bool AutoExpandMembers { get; set; }
-        public string[] ExplicitExpandedMembers { get; set; }
-        public string[] ResponseMembers { get; set; }
+        public Type EntityType { get; init; }
+        public Type ResponseType { get; init; }
+        public Type SimplifiedResponseType { get; init; }
+        public string ControllerRoute { get; init; }
+        public Type QueryRequestType { get; init; }
+        public Type CommandRequestType { get; init; }
+        public Type QueryConfigurationType { get; init; }
+        public IDictionary<string, Type> ParameterTypes { get; init; }
+        public Type ValidatorType { get; init; }
+        public IDictionary<string, AuthorizeableEndpoint> AuthorizeableEndpoints { get; init; }
+        public bool AutoExpandMembers { get; init; }
+        public string[] ExplicitExpandedMembers { get; init; }
+        public string[] ResponseMembers { get; init; }
     }
 }

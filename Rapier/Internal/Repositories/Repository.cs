@@ -46,8 +46,8 @@ namespace Rapier.Internal.Repositories
             if (queryReciever.Parameters.Count > 0)
                 query = query.Where(_querier(queryReciever.Parameters));
             if (queryReciever.OrderByParameter != null)
-                query = _orderer(query, queryReciever.OrderByParameter);
-
+                query = query.OrderBy(queryReciever.OrderByParameter);
+            
             return new QueryResult<TResponse>(
                 await query.CountAsync(token), 
                 await query.ApplyPaging(queryReciever.PaginationQuery)

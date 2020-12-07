@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using MediatR.Pipeline;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,7 @@ using Rapier.Internal.Exceptions;
 using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
+using Rapier.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -31,7 +33,7 @@ namespace Rapier.Configuration
         {
             var config = options.Invoke();
 
-            if (config.InterfaceDiscovery && config.AssemblyType != null)
+            if (config.InterfaceDiscovery && config.ContextType != null)
                 config.DiscoverInterfacesByEntityName(); // concealed config?
 
             services.AddSingleton(config);
@@ -127,6 +129,57 @@ namespace Rapier.Configuration
             app.UseMiddleware<ExceptionMiddleware>();
         }
 
+        private static IReadOnlyDictionary<string, ExpressionUtility.ConstructorDelegate> CreateEntityParameters(
+            IEntitySettings setting)
+        {
+            var parameterDict = new Dictionary<string, ExpressionUtility.ConstructorDelegate>();
+            foreach (var parameter in setting.ParameterTypes)
+                parameterDict.Add(
+                    parameter.Key,
+                    ExpressionUtility.CreateConstructor(parameter.Value, typeof(string)));
+
+            return new ReadOnlyDictionary<string,
+                    ExpressionUtility.ConstructorDelegate>(parameterDict);
+        }
+
+        private static void AddEntityHandlers(this IServiceCollection services, IEntitySettings setting)
+        {
+            var entityTypes = new EntityTypes(setting);
+            var properties = entityTypes
+                    .GetType()
+                    .GetProperties()
+                    .Where(t => t.PropertyType.IsArray);
+            foreach (var property in properties)
+                if (property.GetValue(entityTypes) is Type[] handler)
+                    services.AddScoped(handler[0], handler[1]);
+        }
+
+        private static object CreateQueryManager(IEntitySettings setting)
+        {
+            var queryConfigConstructor = ExpressionUtility.CreateConstructor(
+                typeof(QueryConfiguration<>).MakeGenericType(setting.EntityType),
+                typeof(ICollection<string>));
+            var queryManagerConstructor = ExpressionUtility.CreateConstructor(
+                typeof(QueryManager<>).MakeGenericType(setting.EntityType),
+                typeof(IQueryConfiguration));
+
+            var queryConfig = queryConfigConstructor(setting.ExplicitExpandedMembers?.ToList());
+            var queryManager = queryManagerConstructor(queryConfig);
+            return queryManager;
+        }
+
+        private static ExpressionUtility.ConstructorDelegate CreateRepositoryConstructor(
+            IEntitySettings setting, Type contextType, Type extendedRepositoryType)
+        {
+            var repositoryConstructor = ExpressionUtility.CreateConstructor(
+                    (extendedRepositoryType ?? typeof(Repository<,,>))
+                    .MakeGenericType(setting.EntityType, setting.ResponseType, contextType),
+                    contextType,
+                    typeof(IMapper),
+                    typeof(QueryManager<>).MakeGenericType(setting.EntityType));
+            return repositoryConstructor;
+        }
+
         private static void AddPipelineBehaviors(this IServiceCollection services)
         {
             //  services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
@@ -154,56 +207,16 @@ namespace Rapier.Configuration
             });
             //services.Decorate<IRepositoryWrapper, CachedRepositoryWrapper>();
         }
-
-        private static ExpressionUtility.ConstructorDelegate CreateRepositoryConstructor(
-            IEntitySettings setting, Type contextType, Type extendedRepositoryType)
+        
+        private static void AddUriService(this IServiceCollection services)
         {
-            var repositoryConstructor = ExpressionUtility.CreateConstructor(
-                    (extendedRepositoryType ?? typeof(Repository<,,>))
-                    .MakeGenericType(setting.EntityType, setting.ResponseType, contextType),
-                    contextType,
-                    typeof(IMapper),
-                    typeof(QueryManager<>).MakeGenericType(setting.EntityType));
-            return repositoryConstructor;
-        }
-
-        private static object CreateQueryManager(IEntitySettings setting)
-        {
-            var queryConfigConstructor = ExpressionUtility.CreateConstructor(
-                typeof(QueryConfiguration<>).MakeGenericType(setting.EntityType),
-                typeof(ICollection<string>));
-            var queryManagerConstructor = ExpressionUtility.CreateConstructor(
-                typeof(QueryManager<>).MakeGenericType(setting.EntityType),
-                typeof(IQueryConfiguration));
-
-            var queryConfig = queryConfigConstructor(setting.ExplicitExpandedMembers?.ToList());
-            var queryManager = queryManagerConstructor(queryConfig);
-            return queryManager;
-        }
-
-        private static IReadOnlyDictionary<string, ExpressionUtility.ConstructorDelegate> CreateEntityParameters(
-            IEntitySettings setting)
-        {
-            var parameterDict = new Dictionary<string, ExpressionUtility.ConstructorDelegate>();
-            foreach (var parameter in setting.ParameterTypes)
-                parameterDict.Add(
-                    parameter.Key,
-                    ExpressionUtility.CreateConstructor(parameter.Value, typeof(string)));
-
-            return new ReadOnlyDictionary<string,
-                    ExpressionUtility.ConstructorDelegate>(parameterDict);
-        }
-
-        private static void AddEntityHandlers(this IServiceCollection services, IEntitySettings setting)
-        {
-            var entityTypes = new EntityTypes(setting);
-            var properties = entityTypes
-                    .GetType()
-                    .GetProperties()
-                    .Where(t => t.PropertyType.IsArray);
-            foreach (var property in properties)
-                if (property.GetValue(entityTypes) is Type[] handler)
-                    services.AddScoped(handler[0], handler[1]);
+            services.AddScoped<IUriService>(provider =>
+            {
+                var accessor = provider.GetRequiredService<IHttpContextAccessor>();
+                var request = accessor.HttpContext.Request;
+                var absoluteUri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent(), "/");
+                return new UriService(absoluteUri);
+            });
         }
     }
 }

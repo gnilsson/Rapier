@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rapier.QueryDefinitions.Parameters;
+using System;
 
 namespace Rapier.External.Attributes
 {
@@ -10,5 +11,14 @@ namespace Rapier.External.Attributes
 
         public string Entity { get; set; }
         public string Node { get; set; }
+    }
+
+    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    public class QueryParameterAttribteNew : Attribute
+    {
+        public QueryParameterAttribteNew(IParameter parameter)
+        {
+
+        }
     }
 }

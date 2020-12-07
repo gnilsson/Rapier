@@ -55,34 +55,32 @@ namespace Rapier.External.PipelineBehaviours
         private static bool TryGetRequestValue(PropertyInfo property, object data,
             out KeyValuePair<string, object> value)
         {
-            var attribute = property.GetCustomAttribute<RequestParameterAttribute>();
+            value = default;
+
             var propertyValue = property.GetValue(data);
-            if (attribute?.Mode == RequestParameterMode.Hidden || propertyValue == null)
-            {
-                value = default;
-                return false;
-            }
+            if (propertyValue is null) return false;
+
+            var attribute = property.GetCustomAttribute<RequestParameterAttribute>();
+            if (attribute?.Mode == RequestParameterMode.Hidden) return false;
 
             var propertyName = GetPropertyName(property, attribute);
             value = KeyValuePair.Create(propertyName, propertyValue);
 
-            return propertyValue is not null ||
-                  (propertyValue is int and 0) ||
-                  (propertyValue is string and "");
+            return !(propertyValue is int and 0) ||
+                   !(propertyValue is string and "");
         }
 
-        private static string GetPropertyName(PropertyInfo property, RequestParameterAttribute parameterAttribute)
+        private static string GetPropertyName(PropertyInfo property,
+            RequestParameterAttribute parameterAttribute)
         {
             var isIdCollection = property.CustomAttributes
                 .Any(x => x.AttributeType == typeof(IdCollectionAttribute));
 
-            var propertyName = parameterAttribute == null && isIdCollection ?
+            return parameterAttribute == null && isIdCollection ?
                 property.Name.Replace("Id", string.Empty) :
                 parameterAttribute == null ?
                 property.Name :
                 parameterAttribute.EntityProperty;
-
-            return propertyName;
         }
     }
 }

@@ -10,13 +10,13 @@ namespace Rapier.Internal.Utility
     {
         public static PagedResponse<T> CreatePaginatedResponse<T>(
                       IUriService uriService,
-                      IPaginateable pagination,
+                      QueryReciever request,
                       ICollection<T> response,
-                      string requestRoute,
                       int? total)
         {
+            var pagination = request.PaginationQuery;
             var nextPage = pagination.PageNumber >= 1
-                ? uriService.GetUri(requestRoute,
+                ? uriService.GetUri(request.RequestRoute,
                  new PaginationQuery
                  {
                      PageNumber = pagination.PageNumber + 1,
@@ -25,7 +25,7 @@ namespace Rapier.Internal.Utility
                 : null;
 
             var previousPage = pagination.PageNumber - 1 >= 1
-                ? uriService.GetUri(requestRoute,
+                ? uriService.GetUri(request.RequestRoute,
                  new PaginationQuery
                  {
                      PageNumber = pagination.PageNumber - 1,
@@ -44,7 +44,8 @@ namespace Rapier.Internal.Utility
                 NextPage = total > pagination.PageSize ? nextPage
                 : null,
                 PreviousPage = previousPage,
-                Total = total
+                Total = total,
+                Errors = request.Errors
             };
         }
     }

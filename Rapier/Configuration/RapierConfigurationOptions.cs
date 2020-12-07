@@ -1,14 +1,11 @@
 ﻿using Rapier.Configuration.Settings;
-using Rapier.External;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Rapier.Configuration
 {
     public class RapierConfigurationOptions
     {
-        public Type AssemblyType { get; set; }
         public Type ContextType { get; set; }
         public IEnumerable<IEntitySettings> EntitySettingsCollection { get; set; }
         public IDictionary<Type, ControllerEndpointSettings> EndpointSettingsCollection { get; }

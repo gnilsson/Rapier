@@ -40,8 +40,8 @@ namespace Rapier.Configuration
                     continue;
 
                 var responseType = types.GetFirstClassChild(typeof(EntityResponse), entityType.Name);
-                var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
                 var queryRequestType = types.GetFirstClassChild(typeof(GetRequest), entityType.Name);
+                var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
 
                 var controllerType = typeof(RapierController<,,>)
                     .MakeGenericType(
@@ -49,7 +49,7 @@ namespace Rapier.Configuration
                          queryRequestType,
                         commandRequestType);
 
-                entitySettings.Add(new EntitySettings()
+                entitySettings.Add(new EntitySettings
                 {
                     EntityType = entityType,
                     ResponseType = responseType,
@@ -75,10 +75,10 @@ namespace Rapier.Configuration
         private static IDictionary<Type, string[]> GetSimplifiedResponseMembers(IEnumerable<Type> types)
         {
             var responses = types.Where(x => x.BaseType == typeof(EntityResponse));
-            var dict = new Dictionary<Type, string[]>();
+            var memberNames = new Dictionary<Type, string[]>();
 
             foreach (var response in responses)
-                dict.Add(response, response.GetProperties()
+                memberNames.Add(response, response.GetProperties()
                     .Select(x => (x.Name, x.PropertyType.GetTypeInfo()))
                     .Where(x => x.Item2.GenericTypeArguments != Array.Empty<Type>())
                     .Select(x => (x, x.Item2.GetGenericArguments()[0]))
@@ -86,7 +86,7 @@ namespace Rapier.Configuration
                     .Select(x => x.x.Name)
                     .ToArray());
 
-            return dict;
+            return memberNames;
         }
 
         private static void CheckAttributes(Type[] exportedTypes)
@@ -163,15 +163,5 @@ namespace Rapier.Configuration
             return authorizeEndpoints;
         }
 
-        public static void AddUriService(this IServiceCollection services)
-        {
-            services.AddScoped<IUriService>(provider =>
-            {
-                var accessor = provider.GetRequiredService<IHttpContextAccessor>();
-                var request = accessor.HttpContext.Request;
-                var absoluteUri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent(), "/");
-                return new UriService(absoluteUri);
-            });
-        }
     }
 }

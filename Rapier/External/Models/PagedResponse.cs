@@ -23,5 +23,7 @@ namespace Rapier.External.Models
         public string PreviousPage { get; set; }
 
         public int? Total { get; set; }
+
+        public IEnumerable<string> Errors { get; set; }
     }
 }

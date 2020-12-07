@@ -29,7 +29,6 @@ namespace Rapier.Server
             services.AddRapierControllers(opt =>
             {
                 opt.ContextType = typeof(RapierDbContext);
-                opt.AssemblyType = typeof(Startup);
 
                 opt.Add(typeof(Blog), "api/blogs")
                     .ExpandMembersExplicitly(nameof(BlogResponse.Posts))
