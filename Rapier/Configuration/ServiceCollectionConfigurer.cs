@@ -1,17 +1,16 @@
 ﻿using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Rapier.Configuration.Settings;
+using Rapier.Descriptive;
 using Rapier.External;
 using Rapier.External.Attributes;
 using Rapier.External.Enums;
 using Rapier.External.Models;
+using Rapier.External.Models.Records;
 using Rapier.Internal;
 using Rapier.Internal.Exceptions;
 using Rapier.Internal.Repositories;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions.Parameters;
-using Rapier.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,8 +29,10 @@ namespace Rapier.Configuration
 
             var entityTypes = GetEntityTypes(exportedTypes);
             var types = GetEntitiesCollectiveTypes(exportedTypes);
-            var parameters = GetAllParameters(exportedTypes);
-            var simplifiedResponseMembers = GetSimplifiedResponseMembers(types);
+            //       var parameters = GetAllParameters(exportedTypes);
+            var parameters2 = GetAllParameters2(types);
+            // var simplifiedResponseMembers = GetFieldDescriptions(types);
+            var fieldDescriptions = GetFieldDescriptions(types);
 
             var entitySettings = new List<IEntitySettings>();
             foreach (var entityType in entityTypes)
@@ -58,12 +59,14 @@ namespace Rapier.Configuration
                     QueryConfigurationType = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
                     ControllerRoute = controllerEndpoint.Route,
                     ControllerName = controllerType.AssemblyQualifiedName,
-                    ParameterTypes = GetParameters(parameters, entityType.Name),
+                    //    ParameterTypes = GetParameters(parameters, entityType.Name),
+                    ParameterConfigurations = parameters2.FirstOrDefault(x => x.Key == queryRequestType).Value,
                     ValidatorType = GetValidator(exportedTypes, commandRequestType),
                     AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint, controllerType),
                     AutoExpandMembers = controllerEndpoint.AutoExpandMembers,
                     ExplicitExpandedMembers = controllerEndpoint.ExplicitExpandedMembers,
-                    ResponseMembers = simplifiedResponseMembers[responseType]
+                    FieldDescriptions = fieldDescriptions.FirstOrDefault(x => x.Key == responseType)
+                    //   ResponseMembers = simplifiedResponseMembers[responseType]
                 });
             }
 
@@ -72,21 +75,31 @@ namespace Rapier.Configuration
             return config;
         }
 
-        private static IDictionary<Type, string[]> GetSimplifiedResponseMembers(IEnumerable<Type> types)
+        private static IDictionary<Type, IEnumerable<FieldDescription>> GetFieldDescriptions(IEnumerable<Type> types)
         {
             var responses = types.Where(x => x.BaseType == typeof(EntityResponse));
-            var memberNames = new Dictionary<Type, string[]>();
-
+            var fieldCollection = new Dictionary<Type, IEnumerable<FieldDescription>>();
             foreach (var response in responses)
-                memberNames.Add(response, response.GetProperties()
-                    .Select(x => (x.Name, x.PropertyType.GetTypeInfo()))
+            {
+                var properties = response.GetProperties()
+                    .Select(x => (x.Name, x.PropertyType.GetTypeInfo()));
+
+                var fields = properties
                     .Where(x => x.Item2.GenericTypeArguments != Array.Empty<Type>())
                     .Select(x => (x, x.Item2.GetGenericArguments()[0]))
                     .Where(x => x.Item2.GetTypeInfo().ImplementedInterfaces.Contains(typeof(ISimplified)))
-                    .Select(x => x.x.Name)
-                    .ToArray());
+                    .Select(x => new FieldDescription(x.x.Name, FieldCategory.Relational))
+                    .ToList();
 
-            return memberNames;
+                var defaultFields = properties
+                    .Where(y => fields.All(x => !y.Name.Equals(x.Name)))
+                    .Select(x => new FieldDescription(x.Name, FieldCategory.Default));
+
+                fields.AddRange(defaultFields);
+                fieldCollection.Add(response, fields);
+            }
+
+            return fieldCollection;
         }
 
         private static void CheckAttributes(Type[] exportedTypes)
@@ -99,30 +112,57 @@ namespace Rapier.Configuration
                 .Select(x => x.GetCustomAttribute<IdCollectionAttribute>())
                 .Where(x => x != null);
 
+            // check parameter attri
+
             if (idCollectionAttributes != null)
                 if (!idCollectionAttributes
                     .Any(x => x.EntityType.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity))))
-                    throw new InvalidConfigurationException("IdCollectionAttribute.EntityType must inherit IEntity.");
+                    throw new InvalidConfigurationException(ErrorMessage.Configuration.IdCollectionAttribute);
         }
 
         private static IEnumerable<(Type, QueryParameterAttribute)> GetAllParameters(Type[] exportedTypes)
-            => exportedTypes
-                .Where(x => x.IsClass && !x.IsAbstract && x.BaseType
-                    .GetInterface(typeof(IParameter).Name) != null)
+            => exportedTypes.Where(x =>
+                    x.IsClass && !x.IsAbstract && x.BaseType
+                        .GetInterface(typeof(IParameter).Name) != null)
                 .Select(type => (type, type.GetCustomAttribute<QueryParameterAttribute>()));
 
+        private static IDictionary<Type, IEnumerable<ParameterConfigurationDescription>> GetAllParameters2(IEnumerable<Type> collectedTypes)
+        {
+            var requestTypes = collectedTypes.Where(x => x.BaseType == typeof(GetRequest));
+
+            var parameterDescriptionsCollection = new Dictionary<Type, IEnumerable<ParameterConfigurationDescription>>();
+            foreach (var requestType in requestTypes)
+            {
+                var parameterDescriptions = new List<ParameterConfigurationDescription>()
+                {
+                    new(typeof(CreatedDateParameter), nameof(IEntity.CreatedDate)),
+                    new(typeof(UpdatedDateParameter), nameof(IEntity.UpdatedDate))
+                };
+
+                foreach (var property in requestType.GetProperties())
+                {
+                    var attribute = property.GetCustomAttribute<QueryParameterAttribteNew>();
+                    if (attribute != null)
+                        parameterDescriptions.Add(
+                            new ParameterConfigurationDescription(attribute.ParameterType, property.Name));
+                }
+
+                parameterDescriptionsCollection.Add(requestType, parameterDescriptions);
+            }
+
+            return parameterDescriptionsCollection;
+        }
+
         private static IEnumerable<Type> GetEntitiesCollectiveTypes(Type[] exportedTypes)
-            => exportedTypes
-                .Where(x =>
+            => exportedTypes.Where(x =>
                     !x.IsAbstract &&
                     x.BaseType == typeof(EntityResponse) ||
                     x.BaseType == typeof(GetRequest) ||
                     x.GetInterface(nameof(IModifyRequest)) != null ||
-                    x.GetInterface(nameof(IQueryConfiguration)) != null);
+                    x.GetInterface(nameof(IQueryConfiguration)) != null); // move this last piece?
 
         private static IOrderedEnumerable<Type> GetEntityTypes(Type[] exportedTypes)
-            => exportedTypes
-                .Where(x =>
+            => exportedTypes.Where(x =>
                     !x.IsAbstract &&
                     !x.IsInterface &&
                     x.GetTypeInfo().ImplementedInterfaces.Contains(typeof(IEntity)))
@@ -133,6 +173,8 @@ namespace Rapier.Configuration
                 .FirstOrDefault(x => x.IsSubclassOf(typeof(AbstractValidator<>)
                     .MakeGenericType(commandRequest))) ??
                 typeof(DefaultValidation<>).MakeGenericType(commandRequest);
+
+        //     private static IEnumerable<ParameterConfigurationDescription> GetEntityParameters()
 
         private static IDictionary<string, Type> GetParameters(
             IEnumerable<(Type, QueryParameterAttribute)> parameterTypes,

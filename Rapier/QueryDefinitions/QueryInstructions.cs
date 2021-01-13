@@ -22,18 +22,13 @@ namespace Rapier.QueryDefinitions
             Query = QueryHandle;
         }
 
-        public Func<IQueryable<TEntity>,
-               OrderByParameter,
-               IOrderedQueryable<TEntity>>
-            Order = (query, parameter) => query.OrderBy(parameter);
-
         private Expression<Func<TEntity, bool>> QueryHandle(
                 IEnumerable<IParameter> parameters)
         {
             Expression<Func<TEntity, bool>> predicate = p => true;
 
             foreach (var parameter in parameters)
-                predicate = QueryUtility.AndAlso(
+                predicate = ExpressionUtility.AndAlso(
                     predicate, Filter(parameter));
 
             return predicate;
@@ -72,7 +67,7 @@ namespace Rapier.QueryDefinitions
                 List<MemberExpression> members,
                 IParameter parameter)
         {
-            if (parameter.Method == QueryMethods.Equal)
+            if (parameter.Method == QueryMethod.Equal)
                 return Expression.Equal(members[0], Expression.Constant(parameter.Value));
 
             return (Expression)MethodFactory.QueryMethodContainer

@@ -63,7 +63,7 @@ namespace Rapier.CommandDefinitions
                 if (command.RequestForeignEntities.TryGetValue(propertyKeyPair.Key, out var foreignEntity))
                 {
                     var foreignCollectionType = typeof(List<>).MakeGenericType(foreignEntity);
-                    var addMethod = foreignCollectionType.GetMethod(Methods.Add);
+                    var addMethod = foreignCollectionType.GetMethod(Method.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
 
                     var list = Expression.ListInit(
@@ -106,7 +106,7 @@ namespace Rapier.CommandDefinitions
                 {
                     var property = Expression.Property(parameter, propertyKeyPair.Key);
                     var foreignType = typeof(ICollection<>).MakeGenericType(foreignEntity);
-                    var addMethod = foreignType.GetMethod(Methods.Add);
+                    var addMethod = foreignType.GetMethod(Method.Add);
                     var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
                     var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
 

@@ -16,9 +16,8 @@ namespace Rapier.External.Attributes
     [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
     public class QueryParameterAttribteNew : Attribute
     {
-        public QueryParameterAttribteNew(IParameter parameter)
-        {
-
-        }
+        public QueryParameterAttribteNew(Type parameterType) 
+            => ParameterType = parameterType;
+        public Type ParameterType { get; }
     }
 }

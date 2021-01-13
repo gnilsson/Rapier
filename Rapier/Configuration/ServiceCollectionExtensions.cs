@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Rapier.Configuration.Settings;
 using Rapier.External;
 using Rapier.External.Models;
+using Rapier.External.Models.Records;
 using Rapier.External.PipelineBehaviours;
 using Rapier.Internal;
 using Rapier.Internal.Exceptions;
@@ -76,7 +77,8 @@ namespace Rapier.Configuration
                 IReadOnlyDictionary<string,
                 ExpressionUtility.ConstructorDelegate>>();
 
-            var expandeableMembers = new Dictionary<Type, string[]>();
+       //     var expandeableMembers = new Dictionary<Type, string[]>();
+            
 
             foreach (var setting in entitySettings)
             {
@@ -95,13 +97,14 @@ namespace Rapier.Configuration
                     setting.EntityType.Name,
                     new RepositoryConstructContainer(repositoryConstructor, queryManager));
 
-                expandeableMembers.Add(setting.ResponseType, setting.ResponseMembers);
+                 //expandeableMembers.Add(setting.ResponseType, setting.ResponseMembers);
             }
 
             services.AddSingleton(new SemanticsDefiner(
                 provider.GetRequiredService<IActionDescriptorCollectionProvider>(),
                 provider.GetRequiredService<ActionIntermediary>(),
-                expandeableMembers));
+                new Dictionary<Type, IEnumerable<FieldDescription>>(
+                    entitySettings.Select(x => x.FieldDescriptions))));
 
             services.AddSingleton(new RequestProviderItems
             {
@@ -133,10 +136,10 @@ namespace Rapier.Configuration
             IEntitySettings setting)
         {
             var parameterDict = new Dictionary<string, ExpressionUtility.ConstructorDelegate>();
-            foreach (var parameter in setting.ParameterTypes)
+            foreach (var parameter in setting.ParameterConfigurations)
                 parameterDict.Add(
-                    parameter.Key,
-                    ExpressionUtility.CreateConstructor(parameter.Value, typeof(string)));
+                    parameter.PropertyName,
+                    ExpressionUtility.CreateConstructor(parameter.ParameterType, typeof(string)));
 
             return new ReadOnlyDictionary<string,
                     ExpressionUtility.ConstructorDelegate>(parameterDict);

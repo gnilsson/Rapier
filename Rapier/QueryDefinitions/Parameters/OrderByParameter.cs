@@ -1,4 +1,5 @@
-﻿using Rapier.External.Models;
+﻿using Rapier.Descriptive;
+using Rapier.External.Models;
 using System;
 using System.ComponentModel;
 
@@ -8,17 +9,13 @@ namespace Rapier.QueryDefinitions.Parameters
     {
         public ListSortDirection SortDirection { get; }
         public string Node { get; }
-        public OrderByParameter(string orderable)
+        public OrderByParameter(string[] orderQuery)
         {
-            var text = orderable.Split(":");
-            if (!text[0].Contains("asc", StringComparison.OrdinalIgnoreCase) &&
-                !text[0].Contains("desc", StringComparison.OrdinalIgnoreCase))
-                return;
-
-            SortDirection = text[0].Contains("asc", StringComparison.OrdinalIgnoreCase)
+            SortDirection = orderQuery[0].Contains(
+                OrderParameterDescriptor.Ascending, StringComparison.OrdinalIgnoreCase)
                 ? ListSortDirection.Ascending
                 : ListSortDirection.Descending;
-            Node = text[1];
+            Node = orderQuery[1];
         }
     }
 }

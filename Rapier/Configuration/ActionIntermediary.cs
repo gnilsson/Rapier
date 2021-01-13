@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Rapier.External.Models.Records;
 using System.Collections.Generic;
 
 namespace Rapier.Configuration
@@ -11,7 +11,5 @@ namespace Rapier.Configuration
         {
             ActionDescriptions = new List<ActionDescription>();
         }
-
-        public record ActionDescription(Type ResponseType, string Name, string Controller);
     }
 }

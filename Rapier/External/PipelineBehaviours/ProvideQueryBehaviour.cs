@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Rapier.Configuration;
 using Rapier.Configuration.Settings;
+using Rapier.Descriptive;
+using Rapier.External.Enums;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
 using Rapier.QueryDefinitions.Parameters;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,14 +16,6 @@ using System.Threading.Tasks;
 
 namespace Rapier.External.PipelineBehaviours
 {
-    //public class flerp : IModelBinderProvider
-    //{
-    //    public IModelBinder GetBinder(ModelBinderProviderContext context)
-    //    {
-    //        context.Metadata.
-    //        throw new System.NotImplementedException();
-    //    }
-    //}
     internal sealed class ProvideQueryBehaviour<TRequest, TResponse> :
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : QueryReciever
@@ -54,18 +49,59 @@ namespace Rapier.External.PipelineBehaviours
             request.PaginationQuery = new PaginationQuery(request.Query, _paginationSettings);
             request.RequestRoute = _httpContext.Request.Path;
 
-            request.OrderByParameter =
-                string.IsNullOrWhiteSpace(request.Query.OrderBy) ||
-                !request.Query.OrderBy.Contains(":") ?
-                null : new OrderByParameter(request.Query.OrderBy);
+            if (!string.IsNullOrWhiteSpace(request.Query.OrderBy))
+                AddOrderByParameter(request);
 
             if (!string.IsNullOrWhiteSpace(request.Query.Expand))
-                request.ExpandMembers = request.Query.Expand
-                    .Split('.')
-                    .Where(x => _querySemantics.Members.Contains(x))
-                    .ToArray();
+                AddExpandMembers(request);
 
             return await next();
+        }
+
+        private void AddOrderByParameter(QueryReciever request)
+        {
+            if (!request.Query.OrderBy.Contains(":"))
+            {
+                AddError(request, ErrorMessage.Query.OrderParameterSeperator);
+                return;
+            }
+
+            var orderQuery = request.Query.OrderBy.Split(":");
+            if (!orderQuery[0].Contains(OrderParameterDescriptor.Ascending, StringComparison.OrdinalIgnoreCase) &&
+                !orderQuery[0].Contains(OrderParameterDescriptor.Descending, StringComparison.OrdinalIgnoreCase))
+            {
+                AddError(request, ErrorMessage.Query.OrderParameterDescriptor);
+                return;
+            }
+
+            if (!_querySemantics.DefaultFields.Contains(orderQuery[0]))
+            {
+                AddError(request, ErrorMessage.Query.OrderParameterField);
+            }
+            else
+            {
+                request.OrderByParameter = new OrderByParameter(orderQuery);
+            }
+        }
+
+        private void AddExpandMembers(QueryReciever request)
+        {
+            var expandMembers = new List<string>();
+            foreach (var member in request.Query.Expand.Split('.'))
+                if (_querySemantics.RelationalFields.Contains(member))
+                {
+                    expandMembers.Add(member);
+                }
+                else
+                {
+                    AddError(request, ErrorMessage.Query.ExpandParameterField);
+                }
+        }
+
+        private static void AddError(QueryReciever request, string errorMessage)
+        {
+            request.Errors ??= new List<string>();
+            request.Errors.Add(errorMessage);
         }
     }
 }

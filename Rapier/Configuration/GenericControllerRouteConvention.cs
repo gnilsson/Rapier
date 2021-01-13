@@ -62,10 +62,10 @@ namespace Rapier.Configuration
 
                 action.Filters.Add(action.ActionName switch
                 {
-                    DefaultActions.Get => new ProducesResponseTypeAttribute(typeof(PagedResponse<>)
+                    DefaultAction.Get => new ProducesResponseTypeAttribute(typeof(PagedResponse<>)
                             .MakeGenericType(setting.ResponseType), 200),
-                    DefaultActions.Create => new ProducesResponseTypeAttribute(setting.ResponseType, 201),
-                    DefaultActions.Delete => new ProducesResponseTypeAttribute(typeof(DeleteResponse), 200),
+                    DefaultAction.Create => new ProducesResponseTypeAttribute(setting.ResponseType, 201),
+                    DefaultAction.Delete => new ProducesResponseTypeAttribute(typeof(DeleteResponse), 200),
                     _ => new ProducesResponseTypeAttribute(setting.ResponseType, 200)
                 });
                 action.Filters.Add(new ProducesResponseTypeAttribute(typeof(NotFoundResult), 404));

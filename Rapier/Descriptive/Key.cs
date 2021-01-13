@@ -1,6 +1,6 @@
 ﻿namespace Rapier.Descriptive
 {
-    public static class Keys
+    public static class Key
     {
         public static class RouteValue
         {

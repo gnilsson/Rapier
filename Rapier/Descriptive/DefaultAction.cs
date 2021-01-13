@@ -1,6 +1,6 @@
 ﻿namespace Rapier.Descriptive
 {
-    public static class DefaultActions
+    public static class DefaultAction
     {
         public const string Get = nameof(Get);
         public const string Create = nameof(Create);

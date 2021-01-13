@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Rapier.Descriptive;
+using Rapier.External.Enums;
 using Rapier.External.Models;
+using Rapier.External.Models.Records;
 using Rapier.Internal.Utility;
 using System;
 using System.Collections.Generic;
@@ -17,7 +19,7 @@ namespace Rapier.Configuration
         public SemanticsDefiner(
             IActionDescriptorCollectionProvider actionDescriptors,
             ActionIntermediary actionIntermediary,
-            IDictionary<Type, string[]> expandeableMembers)
+            IDictionary<Type, IEnumerable<FieldDescription>> expandeableMembers)
         {
             ConfigureAction(actionDescriptors, actionIntermediary);
             ConfigureQuery(expandeableMembers);
@@ -32,14 +34,14 @@ namespace Rapier.Configuration
 
             foreach (var descriptor in actionDescriptors.ActionDescriptors.Items)
             {
-                var controller = descriptor.RouteValues[Keys.RouteValue.Controller];
+                var controller = descriptor.RouteValues[Key.RouteValue.Controller];
                 var entity = controller.Split('C')[0];
-                var action = descriptor.RouteValues[Keys.RouteValue.Action];
+                var action = descriptor.RouteValues[Key.RouteValue.Action];
 
                 Func<string> newActionName = action switch
                 {
-                    DefaultActions.Get => () => $"{action}{entity}s",
-                    DefaultActions.GetById => () =>
+                    DefaultAction.Get => () => $"{action}{entity}s",
+                    DefaultAction.GetById => () =>
                     {
                         var getById = action.Insert(3, ".").Split('.');
                         return $"{getById[0]}{entity}{getById[1]}";
@@ -48,7 +50,7 @@ namespace Rapier.Configuration
                     _ => () => $"{action}{entity}"
                 };
 
-                descriptor.RouteValues[Keys.RouteValue.Action] = newActionName();
+                descriptor.RouteValues[Key.RouteValue.Action] = newActionName();
                 actionNames.Add($"{controller}.{action}", newActionName());
             }
 
@@ -70,12 +72,12 @@ namespace Rapier.Configuration
             Actions = new ReadOnlyCollection<object>(actions);
         }
 
-        private void ConfigureQuery(IDictionary<Type, string[]> expandeableMembers)
+        private void ConfigureQuery(IDictionary<Type, IEnumerable<FieldDescription>> fieldDescriptions)
         {
-            Queries = new ReadOnlyCollection<object>(expandeableMembers.Select(x =>
+            Queries = new ReadOnlyCollection<object>(fieldDescriptions.Select(x =>
             ExpressionUtility.CreateConstructor(
                     typeof(Query<>).MakeGenericType(typeof(PagedResponse<>).MakeGenericType(x.Key)),
-                    typeof(IList<string>))(x.Value.ToList())).ToList()); // why can't I pass array? hm
+                    typeof(IEnumerable<FieldDescription>))(x.Value)).ToList());
         }
 
         public Action<T> GetAction<T>()
@@ -95,9 +97,18 @@ namespace Rapier.Configuration
 
         public class Query<T>
         {
-            public Query(IList<string> members) 
-                => Members = new ReadOnlyCollection<string>(members);
-            public IReadOnlyCollection<string> Members { get; set; }
+            public Query(IEnumerable<FieldDescription> members)
+                => (DefaultFields, RelationalFields)
+                = (new ReadOnlyCollection<string>(members
+                       .Where(x => x.Category == FieldCategory.Default)
+                       .Select(x => x.Name)
+                       .ToList()),
+                   new ReadOnlyCollection<string>(members
+                       .Where(x => x.Category == FieldCategory.Relational)
+                       .Select(x => x.Name)
+                       .ToList()));
+            public IReadOnlyCollection<string> DefaultFields { get; }
+            public IReadOnlyCollection<string> RelationalFields { get; }
         }
     }
 }

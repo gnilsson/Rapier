@@ -22,7 +22,7 @@ namespace Rapier.Internal.Repositories
             Expression<Func<TEntity, bool>> predicate,
             string includeNavigation,
             CancellationToken token);
-        void Delete(TEntity entity, CancellationToken token);
+        void Delete(TEntity entity);
         Task CreateAsync(TEntity entity, CancellationToken token);
         Task<IQueryResult<TResponse>> GetQueriedResultAsync(
             QueryReciever queryReciever, CancellationToken token);

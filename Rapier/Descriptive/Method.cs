@@ -1,13 +1,13 @@
 ﻿namespace Rapier.Descriptive
 {
-    public static class QueryMethods
+    public static class QueryMethod
     {
         public const string CallStringContains = nameof(CallStringContains);
         public const string CallDateTimeCompare = nameof(CallDateTimeCompare);
         public const string Equal = nameof(Equal);
     }
 
-    public static class Methods
+    public static class Method
     {
         public const string Contains = nameof(Contains);
         public const string CompareTo = nameof(CompareTo);

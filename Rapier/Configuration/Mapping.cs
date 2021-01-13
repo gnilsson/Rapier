@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using Rapier.Configuration.Settings;
 using Rapier.External;
+using Rapier.External.Enums;
 using Rapier.External.Models;
 using Rapier.Internal.Utility;
+using System.Linq;
 
 namespace Rapier.Configuration
 {
@@ -44,9 +46,12 @@ namespace Rapier.Configuration
         public static IMappingExpression ForMembersExplicitExpansion(
             this IMappingExpression map, IEntitySettings setting)
         {
+            var relational = setting.FieldDescriptions.Value
+                .Where(x => x.Category == FieldCategory.Relational);
+
             if (!setting.AutoExpandMembers)
-                foreach (var expand in setting.ResponseMembers)
-                    map = map.ForMember(expand, x => x.ExplicitExpansion());
+                foreach (var expand in relational)
+                    map = map.ForMember(expand.Name, x => x.ExplicitExpansion());
 
             return map;
         }

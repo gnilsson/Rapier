@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Rapier.External;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
-using Rapier.QueryDefinitions.Parameters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,9 +18,7 @@ namespace Rapier.Internal.Repositories
                  where TEntity : class, IEntity
                  where TContext : DbContext
     {
-
         private readonly IMapper _mapper;
-        private readonly Func<IQueryable<TEntity>, OrderByParameter, IOrderedQueryable<TEntity>> _orderer;
         private readonly string[] _expandMembers;
         private readonly QueryInstructions<TEntity>.QueryDelegate _querier;
 
@@ -31,13 +27,15 @@ namespace Rapier.Internal.Repositories
             IMapper mapper,
             QueryManager<TEntity> queryManager) :
             base(context) =>
-            (_mapper, _orderer, _expandMembers, _querier) =
-            (mapper, queryManager.Orderer, queryManager.ExpandMembers, queryManager.Querier);
+            (_mapper, _expandMembers, _querier) =
+            (mapper, queryManager.ExpandMembers, queryManager.Querier);
 
         private DbSet<TEntity> Set()
             => DbContext.Set<TEntity>();
+
         private IQueryable<TEntity> SetQuery()
             => DbContext.Set<TEntity>();
+
         public async Task<IQueryResult<TResponse>> GetQueriedResultAsync(
             QueryReciever queryReciever, CancellationToken token)
         {
@@ -47,9 +45,9 @@ namespace Rapier.Internal.Repositories
                 query = query.Where(_querier(queryReciever.Parameters));
             if (queryReciever.OrderByParameter != null)
                 query = query.OrderBy(queryReciever.OrderByParameter);
-            
+
             return new QueryResult<TResponse>(
-                await query.CountAsync(token), 
+                await query.CountAsync(token),
                 await query.ApplyPaging(queryReciever.PaginationQuery)
                 .ProjectTo<TResponse, TEntity>(
                     _mapper.ConfigurationProvider, queryReciever.ExpandMembers ?? _expandMembers)
@@ -60,17 +58,19 @@ namespace Rapier.Internal.Repositories
             Expression<Func<TEntity, bool>> predicate,
             CancellationToken token)
           => await SetQuery()
-                    .AsNoTracking()
-                    .Where(predicate)
-                    .ProjectTo<TResponse, TEntity>(_mapper.ConfigurationProvider, _expandMembers)
-                    .FirstOrDefaultAsync(token);
+                .AsNoTracking()
+                .Where(predicate)
+                .ProjectTo<TResponse, TEntity>(_mapper.ConfigurationProvider, _expandMembers)
+                .FirstOrDefaultAsync(token);
 
         public async ValueTask<TEntity> FindAsync(
             Guid entityId, CancellationToken token)
             => await Set().FindAsync(new object[] { entityId }, token);
+
         public async Task<List<TEntity>> GetManyByConditionAsync(
             Expression<Func<TEntity, bool>> predicate, CancellationToken token)
            => await FindByCondition(predicate).ToListAsync(token);
+
         private IQueryable<TEntity> FindByCondition(
              Expression<Func<TEntity, bool>> predicate)
            => SetQuery().Where(predicate);
@@ -84,16 +84,11 @@ namespace Rapier.Internal.Repositories
                 .Include(includeNavigation)
                 .FirstOrDefaultAsync(token);
 
-        public void Delete(TEntity entity, CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
+        public void Delete(TEntity entity)
+            => Set().Remove(entity);
 
         public async Task CreateAsync(
             TEntity entity, CancellationToken token)
            => await Set().AddAsync(entity, token);
-
-
-
     }
 }

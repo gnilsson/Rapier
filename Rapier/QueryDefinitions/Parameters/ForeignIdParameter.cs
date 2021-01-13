@@ -13,7 +13,7 @@ namespace Rapier.QueryDefinitions.Parameters
         public void Set(string value)
         {
             Value = Guid.Parse(value);
-            Method = QueryMethods.Equal;
+            Method = QueryMethod.Equal;
         }
     }
 }
