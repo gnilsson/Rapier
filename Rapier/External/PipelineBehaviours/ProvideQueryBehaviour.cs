@@ -1,10 +1,9 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Rapier.Configuration;
 using Rapier.Configuration.Settings;
 using Rapier.Descriptive;
-using Rapier.External.Enums;
+using Rapier.External.Models.Records;
 using Rapier.Internal.Utility;
 using Rapier.QueryDefinitions;
 using Rapier.QueryDefinitions.Parameters;
@@ -20,8 +19,7 @@ namespace Rapier.External.PipelineBehaviours
         IPipelineBehavior<TRequest, TResponse>
         where TRequest : QueryReciever
     {
-        private readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string,
-            ExpressionUtility.ConstructorDelegate>> _parameters;
+        private readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, QueryParameterShell>> _parameters;
         private readonly PaginationSettings _paginationSettings;
         private readonly HttpContext _httpContext;
         private readonly SemanticsDefiner.Query<TResponse> _querySemantics;
@@ -43,7 +41,8 @@ namespace Rapier.External.PipelineBehaviours
             request.Parameters = _parameters
                 .FirstOrDefault(x => x.Key == request.Query.GetType().Name).Value
                 .Where(x => _httpContext.Request.Query.ContainsKey(x.Key))
-                .Select(x => x.Value(_httpContext.Request.Query[x.Key]) as IParameter)
+                .Select(x => x.Value.Constructor(
+                    _httpContext.Request.Query[x.Key].ToString(), x.Value.NavigationArgs) as IParameter)
                 .ToList();
 
             request.PaginationQuery = new PaginationQuery(request.Query, _paginationSettings);
@@ -77,25 +76,25 @@ namespace Rapier.External.PipelineBehaviours
             if (!_querySemantics.DefaultFields.Contains(orderQuery[0]))
             {
                 AddError(request, ErrorMessage.Query.OrderParameterField);
+                return;
             }
-            else
-            {
-                request.OrderByParameter = new OrderByParameter(orderQuery);
-            }
+
+            request.OrderByParameter = new OrderByParameter(orderQuery);
         }
 
         private void AddExpandMembers(QueryReciever request)
         {
             var expandMembers = new List<string>();
             foreach (var member in request.Query.Expand.Split('.'))
+            {
                 if (_querySemantics.RelationalFields.Contains(member))
                 {
                     expandMembers.Add(member);
+                    continue;
                 }
-                else
-                {
-                    AddError(request, ErrorMessage.Query.ExpandParameterField);
-                }
+
+                AddError(request, ErrorMessage.Query.ExpandParameterField);
+            }
         }
 
         private static void AddError(QueryReciever request, string errorMessage)

@@ -16,14 +16,14 @@ namespace Rapier.Internal.Repositories
         private readonly TContext _dbContext;
         private readonly IMapper _mapper;
         private readonly ConcurrentDictionary<string, object> _repoCache;
-        private readonly IReadOnlyDictionary<string, RepositoryConstructContainer> _repoConstructorContainer;
+        private readonly IReadOnlyDictionary<string, RepositoryShell> _repoConstructorContainer;
         private IGeneralRepository _general;
 
         public RepositoryWrapper(
             TContext context,
             IMapper mapper,
             IReadOnlyDictionary<string,
-            RepositoryConstructContainer> repoCtor) =>
+            RepositoryShell> repoCtor) =>
             (_dbContext, _mapper, _repoCache, _repoConstructorContainer) =
             (context, mapper, new ConcurrentDictionary<string, object>(), repoCtor);
 
@@ -42,7 +42,7 @@ namespace Rapier.Internal.Repositories
         {
             var construct = _repoConstructorContainer
                 .FirstOrDefault(x => x.Key == typeof(TEntity).Name).Value;
-            return construct.RepositoryConstructor(
+            return construct.Constructor(
                 _dbContext, _mapper, construct.QueryConfiguration) 
                 as IRepository<TEntity, TResponse>;
         }

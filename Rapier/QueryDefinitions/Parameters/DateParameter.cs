@@ -3,7 +3,7 @@ using System;
 
 namespace Rapier.QueryDefinitions.Parameters
 {
-    public abstract class DateParameter : IParameter
+    public class DateParameter : IParameter
     {
         public object Value { get; private set; }
         public string[] ParentNavigationProperties { get; internal set; }
@@ -13,6 +13,12 @@ namespace Rapier.QueryDefinitions.Parameters
         {
             Value = DateTime.Parse(value);
             Method = QueryMethod.CallDateTimeCompare;
+        }
+
+        public DateParameter(string value, string[] navigationNodes)
+        {
+            this.Set(value);
+            NavigationProperties = navigationNodes;
         }
     }
 }

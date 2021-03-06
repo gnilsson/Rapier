@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Rapier.External
 {
-    public interface IRapierController<in TQuery, in TCommand>
+    public interface IRapierController<in TQuery, in TCommand> : IExtendedController
         where TQuery : GetRequest
         where TCommand : IModifyRequest
     {

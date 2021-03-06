@@ -4,10 +4,8 @@ namespace Rapier.QueryDefinitions.Parameters
 {
     public class UpdatedDateParameter : DateParameter
     {
-        public UpdatedDateParameter(string value)
-        {
-            base.Set(value);
-            NavigationProperties = new[] { nameof(IEntity.UpdatedDate) };
-        }
+        public UpdatedDateParameter(string value, string[] navigationNodes = null)
+            : base(value, navigationNodes ?? new[] { nameof(IEntity.UpdatedDate) })
+        { }
     }
 }

@@ -19,11 +19,14 @@ namespace Rapier.Internal
             var flags = BindingFlags.Public | BindingFlags.Static;
             QueryMethodContainer = new Dictionary<string, MethodInfo>
             {
-                {QueryMethod.CallStringContains,typeof(QueryUtility)
-                    .GetMethod(nameof(ExpressionUtility.CallStringContains), flags) },   
-                
-                {QueryMethod.CallDateTimeCompare,typeof(QueryUtility)
-                    .GetMethod(nameof(ExpressionUtility.CallDateTimeCompare), flags)}
+                {   
+                    QueryMethod.CallStringContains,typeof(ExpressionUtility)
+                        .GetMethod(nameof(ExpressionUtility.CallStringContains), flags) 
+                },
+                {   
+                    QueryMethod.CallDateTimeCompare,typeof(ExpressionUtility)
+                        .GetMethod(nameof(ExpressionUtility.CallDateTimeCompare), flags) 
+                }
             };
 
             Contains = typeof(string).GetMethod(nameof(Method.Contains), new[] { typeof(string) });

@@ -3,7 +3,7 @@ using System;
 
 namespace Rapier.QueryDefinitions.Parameters
 {
-    public abstract class ForeignIdParameter : IParameter
+    public class ForeignIdParameter : IParameter
     {
         public string[] ParentNavigationProperties { get; protected set; }
         public string[] NavigationProperties { get; protected set; }
@@ -14,6 +14,12 @@ namespace Rapier.QueryDefinitions.Parameters
         {
             Value = Guid.Parse(value);
             Method = QueryMethod.Equal;
+        }
+
+        public ForeignIdParameter(string value, string[] navigationNodes)
+        {
+            this.Set(value);
+            NavigationProperties = navigationNodes;
         }
     }
 }

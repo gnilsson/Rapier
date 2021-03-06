@@ -45,6 +45,7 @@ namespace Rapier.Internal.Utility
                 members.Expressions[iterator], MethodFactory.Contains, value);
             if (iterator >= members.Expressions.Count - 1)
                 return containsLeft;
+
             iterator++;
             return Expression.Or(
                 containsLeft, CallStringContains(

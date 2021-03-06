@@ -2,5 +2,5 @@
 
 namespace Rapier.External.Models.Records
 {
-    public record ParameterConfigurationDescription(Type ParameterType, string PropertyName);
+    public record ParameterConfigurationDescription(Type ParameterType, string PropertyName, string[] NavigationNodes);
 }

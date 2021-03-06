@@ -12,8 +12,8 @@ namespace Rapier.External.Extensions
             Func<object, OkObjectResult> okObject)
         {
             var result = await resultTask;
-            return result == null ?
-                (IActionResult)new NotFoundResult() :
+            return result == null ? 
+                new NotFoundResult() : 
                 okObject(result);
         }
 
@@ -24,8 +24,8 @@ namespace Rapier.External.Extensions
             where TResponse : EntityResponse
         {
             var result = await resultTask;
-            return result == null ?
-                (IActionResult)new NotFoundResult() :
+            return result == null ? 
+                new NotFoundResult() : 
                 createdAt(action, new { id = result.Id }, result);
         }
     }

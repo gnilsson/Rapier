@@ -2,16 +2,16 @@
 
 namespace Rapier.Internal.Repositories
 {
-    public class RepositoryConstructContainer
+    public class RepositoryShell
     {
-        public ExpressionUtility.ConstructorDelegate RepositoryConstructor { get; set; }
+        public ExpressionUtility.ConstructorDelegate Constructor { get; set; }
         public object QueryConfiguration { get; set; }
 
-        public RepositoryConstructContainer(
+        public RepositoryShell(
             ExpressionUtility.ConstructorDelegate repositoryConstructor,
             object queryConfiguration)
         {
-            RepositoryConstructor = repositoryConstructor;
+            Constructor = repositoryConstructor;
             QueryConfiguration = queryConfiguration;
         }
 

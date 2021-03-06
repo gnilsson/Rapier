@@ -69,20 +69,15 @@ namespace Rapier.Configuration
             foreach (var handlerType in new HandlerTypesContainer())
                 services.AddScoped(handlerType[0], handlerType[1]);
 
-            var repositories =
-                new Dictionary<string,
-                RepositoryConstructContainer>();
-            var fullParameters =
-                new Dictionary<string,
-                IReadOnlyDictionary<string,
-                ExpressionUtility.ConstructorDelegate>>();
+            var repositoryShells = new Dictionary<string, RepositoryShell>();
+            var parameterShells = new Dictionary<string, IReadOnlyDictionary<string, QueryParameterShell>>();
 
-       //     var expandeableMembers = new Dictionary<Type, string[]>();
-            
+            //     var expandeableMembers = new Dictionary<Type, string[]>();
+
 
             foreach (var setting in entitySettings)
             {
-                fullParameters.Add(setting.QueryRequestType.Name, CreateEntityParameters(setting));
+                parameterShells.Add(setting.QueryRequestType.Name, CreateEntityParameterShells(setting));
 
                 services.AddTransient(typeof(IValidator<>).MakeGenericType(setting.CommandRequestType), setting.ValidatorType);
 
@@ -93,11 +88,11 @@ namespace Rapier.Configuration
                 var repositoryConstructor = CreateRepositoryConstructor(
                     setting, config.ContextType, config.ExtendedRepositoryType);
 
-                repositories.Add(
+                repositoryShells.Add(
                     setting.EntityType.Name,
-                    new RepositoryConstructContainer(repositoryConstructor, queryManager));
+                    new RepositoryShell(repositoryConstructor, queryManager));
 
-                 //expandeableMembers.Add(setting.ResponseType, setting.ResponseMembers);
+                //expandeableMembers.Add(setting.ResponseType, setting.ResponseMembers);
             }
 
             services.AddSingleton(new SemanticsDefiner(
@@ -108,8 +103,7 @@ namespace Rapier.Configuration
 
             services.AddSingleton(new RequestProviderItems
             {
-                Parameters = new ReadOnlyDictionary<string, IReadOnlyDictionary<string,
-                ExpressionUtility.ConstructorDelegate>>(fullParameters),
+                Parameters = new ReadOnlyDictionary<string, IReadOnlyDictionary<string, QueryParameterShell>>(parameterShells),
                 PaginationSettings = config.PaginationSettings ?? new PaginationSettings(),
             });
 
@@ -122,7 +116,7 @@ namespace Rapier.Configuration
             var mapper = new Mapping(entitySettings).ConfigureMapper();
             services.TryAddScoped(x => mapper);
 
-            services.AddRepositoryWrapper(config.ContextType, mapper, repositories);
+            services.AddRepositoryWrapper(config.ContextType, mapper, repositoryShells);
 
             services.AddUriService();
         }
@@ -132,17 +126,18 @@ namespace Rapier.Configuration
             app.UseMiddleware<ExceptionMiddleware>();
         }
 
-        private static IReadOnlyDictionary<string, ExpressionUtility.ConstructorDelegate> CreateEntityParameters(
-            IEntitySettings setting)
+        private static IReadOnlyDictionary<string, QueryParameterShell> CreateEntityParameterShells(IEntitySettings setting)
         {
-            var parameterDict = new Dictionary<string, ExpressionUtility.ConstructorDelegate>();
-            foreach (var parameter in setting.ParameterConfigurations)
-                parameterDict.Add(
-                    parameter.PropertyName,
-                    ExpressionUtility.CreateConstructor(parameter.ParameterType, typeof(string)));
+            var parameterDict = new Dictionary<string, QueryParameterShell>();
 
-            return new ReadOnlyDictionary<string,
-                    ExpressionUtility.ConstructorDelegate>(parameterDict);
+            foreach (var parameter in setting.ParameterConfigurations)
+            {
+                parameterDict.Add(parameter.PropertyName,
+                new QueryParameterShell(ExpressionUtility.CreateConstructor(
+                        parameter.ParameterType, typeof(string), typeof(string[])), parameter.NavigationNodes));
+            }
+
+            return new ReadOnlyDictionary<string, QueryParameterShell>(parameterDict);
         }
 
         private static void AddEntityHandlers(this IServiceCollection services, IEntitySettings setting)
@@ -152,6 +147,7 @@ namespace Rapier.Configuration
                     .GetType()
                     .GetProperties()
                     .Where(t => t.PropertyType.IsArray);
+
             foreach (var property in properties)
                 if (property.GetValue(entityTypes) is Type[] handler)
                     services.AddScoped(handler[0], handler[1]);
@@ -162,6 +158,7 @@ namespace Rapier.Configuration
             var queryConfigConstructor = ExpressionUtility.CreateConstructor(
                 typeof(QueryConfiguration<>).MakeGenericType(setting.EntityType),
                 typeof(ICollection<string>));
+
             var queryManagerConstructor = ExpressionUtility.CreateConstructor(
                 typeof(QueryManager<>).MakeGenericType(setting.EntityType),
                 typeof(IQueryConfiguration));
@@ -192,7 +189,7 @@ namespace Rapier.Configuration
         }
 
         private static void AddRepositoryWrapper(this IServiceCollection services, Type dbContextType,
-            IMapper mapper, Dictionary<string, RepositoryConstructContainer> repositories)
+            IMapper mapper, Dictionary<string, RepositoryShell> repositories)
         {
             services.AddScoped(x =>
             {
@@ -203,14 +200,14 @@ namespace Rapier.Configuration
                     dbContextType,
                     typeof(IMapper),
                     typeof(IReadOnlyDictionary<string,
-                    RepositoryConstructContainer>)});
+                    RepositoryShell>)});
                 return (IRepositoryWrapper)wrapperCtor.Invoke(
                     new[] { context, mapper,
-                        new ReadOnlyDictionary<string, RepositoryConstructContainer>(repositories) });
+                        new ReadOnlyDictionary<string, RepositoryShell>(repositories) });
             });
             //services.Decorate<IRepositoryWrapper, CachedRepositoryWrapper>();
         }
-        
+
         private static void AddUriService(this IServiceCollection services)
         {
             services.AddScoped<IUriService>(provider =>
