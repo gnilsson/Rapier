@@ -95,6 +95,8 @@ namespace Rapier.External.PipelineBehaviours
 
                 AddError(request, ErrorMessage.Query.ExpandParameterField);
             }
+
+            request.ExpandMembers = expandMembers.ToArray();
         }
 
         private static void AddError(QueryReciever request, string errorMessage)

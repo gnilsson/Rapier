@@ -34,7 +34,7 @@ namespace Rapier.Server
                     .ExpandMembersExplicitly(nameof(BlogResponse.Posts))
                     .Authorize(AuthorizationCategory.None, AuthorizationPolicies.WorksForRapier)
                     .AuthorizeAction(DefaultAction.Delete, AuthorizationCategory.Custom);
-                
+
                 opt.Add(typeof(Post), "api/posts");
                 opt.Add(typeof(Author), "api/authors");
             });

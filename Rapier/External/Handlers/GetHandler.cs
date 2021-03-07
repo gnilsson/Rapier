@@ -30,8 +30,8 @@ namespace Rapier.External.Handlers
             TRequest request,
             CancellationToken cancellationToken)
         {
-            var queryData = await _repository.GetQueriedResultAsync(
-                request, cancellationToken);
+            var queryData = await _repository.GetQueriedResultAsync(request, cancellationToken);
+
             return PaginationUtility.CreatePaginatedResponse(
                 _uriService, request, queryData.Items, queryData.Total);
         }

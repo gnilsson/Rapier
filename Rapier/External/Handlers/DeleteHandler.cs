@@ -25,7 +25,7 @@ namespace Rapier.External.Handlers
 
             _repositoryWrapper.General.Delete(entity);
             await _repositoryWrapper.SaveAsync();
-            return new DeleteResponse { Message = "1" };
+            return new DeleteResponse { Message = "1" };  // Todo: proper response
         }
     }
 }

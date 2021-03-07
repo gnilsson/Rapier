@@ -29,8 +29,7 @@ namespace Rapier.Configuration
 
             var entityTypes = GetEntityTypes(exportedTypes);
             var types = GetEntitiesCollectiveTypes(exportedTypes);
-            var parameters2 = GetAllParameters(types);
-            // var simplifiedResponseMembers = GetFieldDescriptions(types);
+            var parameters = GetAllParameters(types);
             var fieldDescriptions = GetFieldDescriptions(types);
 
             var entitySettings = new List<IEntitySettings>();
@@ -39,38 +38,44 @@ namespace Rapier.Configuration
                 if (!config.EndpointSettingsCollection.TryGetValue(entityType, out var controllerEndpoint))
                     continue;
 
-                var responseType = types.GetFirstClassChild(typeof(EntityResponse), entityType.Name);
-                var queryRequestType = types.GetFirstClassChild(typeof(GetRequest), entityType.Name);
-                var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
-
-                var controllerType = typeof(RapierController<,,>)
-                    .MakeGenericType(
-                        responseType,
-                         queryRequestType,
-                        commandRequestType);
-
-                entitySettings.Add(new EntitySettings
-                {
-                    EntityType = entityType,
-                    ResponseType = responseType,
-                    QueryRequestType = queryRequestType,
-                    CommandRequestType = commandRequestType,
-                    QueryConfigurationType = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
-                    ControllerRoute = controllerEndpoint.Route,
-                    ControllerName = controllerType.AssemblyQualifiedName,
-                    ParameterConfigurations = parameters2.FirstOrDefault(x => x.Key == queryRequestType).Value,
-                    ValidatorType = GetValidator(exportedTypes, commandRequestType),
-                    AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint, controllerType),
-                    AutoExpandMembers = controllerEndpoint.AutoExpandMembers,
-                    ExplicitExpandedMembers = controllerEndpoint.ExplicitExpandedMembers,
-                    FieldDescriptions = fieldDescriptions.FirstOrDefault(x => x.Key == responseType)
-                    //   ResponseMembers = simplifiedResponseMembers[responseType]
-                });
+                PopulateEntitySettings(exportedTypes, types, parameters, fieldDescriptions, entitySettings, entityType, controllerEndpoint);
             }
 
             config.ExtendedRepositoryType = exportedTypes.FirstOrDefault(x => x.BaseType == typeof(Repository<,,>));
             config.EntitySettingsCollection = entitySettings;
             return config;
+        }
+
+        private static void PopulateEntitySettings(Type[] exportedTypes, IEnumerable<Type> types, 
+            IDictionary<Type, IEnumerable<ParameterConfigurationDescription>> parameters, IDictionary<Type, IEnumerable<FieldDescription>> fieldDescriptions, 
+            List<IEntitySettings> entitySettings, Type entityType, ControllerEndpointSettings controllerEndpoint)
+        {
+            var responseType = types.GetFirstClassChild(typeof(EntityResponse), entityType.Name);
+            var queryRequestType = types.GetFirstClassChild(typeof(GetRequest), entityType.Name);
+            var commandRequestType = types.GetFirstInterfaceChild(typeof(IModifyRequest), entityType.Name);
+
+            var controllerType = typeof(RapierController<,,>)
+                .MakeGenericType(
+                    responseType,
+                     queryRequestType,
+                    commandRequestType);
+
+            entitySettings.Add(new EntitySettings
+            {
+                EntityType = entityType,
+                ResponseType = responseType,
+                QueryRequestType = queryRequestType,
+                CommandRequestType = commandRequestType,
+                QueryConfigurationType = types.GetFirstInterfaceChild(typeof(IQueryConfiguration), entityType.Name),
+                ControllerRoute = controllerEndpoint.Route,
+                ControllerName = controllerType.AssemblyQualifiedName,
+                ParameterConfigurations = parameters.FirstOrDefault(x => x.Key == queryRequestType).Value,
+                ValidatorType = GetValidator(exportedTypes, commandRequestType),
+                AuthorizeableEndpoints = GetAuthorizeableEndpoints(controllerEndpoint, controllerType),
+                AutoExpandMembers = controllerEndpoint.AutoExpandMembers,
+                ExplicitExpandedMembers = controllerEndpoint.ExplicitExpandedMembers,
+                FieldDescriptions = fieldDescriptions.FirstOrDefault(x => x.Key == responseType)
+            });
         }
 
         private static IDictionary<Type, IEnumerable<FieldDescription>> GetFieldDescriptions(IEnumerable<Type> types)
@@ -164,7 +169,6 @@ namespace Rapier.Configuration
                 x.GetInterface(nameof(IQueryConfiguration)) != null); // move this last piece?
         }
 
-
         private static IOrderedEnumerable<Type> GetEntityTypes(Type[] exportedTypes)
         {
             return exportedTypes.Where(x =>
@@ -198,6 +202,5 @@ namespace Rapier.Configuration
                     });
             return authorizeEndpoints;
         }
-
     }
 }

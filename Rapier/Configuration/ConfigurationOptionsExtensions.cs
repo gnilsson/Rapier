@@ -61,10 +61,10 @@ namespace Rapier.Configuration
 
         public static ControllerEndpointSettings ExpandMembersExplicitly(
             this ControllerEndpointSettings controller,
-            params string[] members)
+            params string[] membersToExpand)
         {
             controller.AutoExpandMembers = false;
-            controller.ExplicitExpandedMembers = members;
+            controller.ExplicitExpandedMembers = membersToExpand;
             return controller;
         }
     }

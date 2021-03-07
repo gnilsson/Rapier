@@ -22,8 +22,7 @@ namespace Rapier.External.Handlers
         public virtual async Task<TResponse> Handle(
             TRequest request, CancellationToken cancellationToken)
         {
-            var entityResponse = await _repository
-                .GetFirstOrDefaultAsync(
+            var entityResponse = await _repository.GetFirstOrDefaultAsync(
                 x => x.Id == request.Id, cancellationToken);
 
             return entityResponse ?? default;

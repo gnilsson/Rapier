@@ -60,26 +60,18 @@ namespace Rapier.CommandDefinitions
 
             var exprs = new List<MemberAssignment>();
             foreach (var propertyKeyPair in propertyCollection)
+            {
                 if (command.RequestForeignEntities.TryGetValue(propertyKeyPair.Key, out var foreignEntity))
                 {
-                    var foreignCollectionType = typeof(List<>).MakeGenericType(foreignEntity);
-                    var addMethod = foreignCollectionType.GetMethod(Method.Add);
-                    var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
+                    CreateCollection(exprs, propertyKeyPair, foreignEntity);
 
-                    var list = Expression.ListInit(
-                        Expression.New(foreignCollectionType),
-                        foreignEntities.Select(entity => Expression.ElementInit(
-                            addMethod, Expression.Constant(entity))));
+                    continue;
+                }
 
-                    exprs.Add(
-                        Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0], list));
-                }
-                else
-                {
-                    exprs.Add(
-                        Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0],
-                        Expression.Constant(propertyKeyPair.Value)));
-                }
+                exprs.Add(
+                    Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0],
+                    Expression.Constant(propertyKeyPair.Value)));
+            }
 
             var now = Expression.Constant(DateTime.UtcNow);
             exprs.AddRange(
@@ -102,26 +94,19 @@ namespace Rapier.CommandDefinitions
             var parameter = Expression.Parameter(typeof(TEntity));
             var exprs = new List<Expression>();
             foreach (var propertyKeyPair in propertyCollection)
+            {
                 if (command.RequestForeignEntities.TryGetValue(propertyKeyPair.Key, out var foreignEntity))
                 {
-                    var property = Expression.Property(parameter, propertyKeyPair.Key);
-                    var foreignType = typeof(ICollection<>).MakeGenericType(foreignEntity);
-                    var addMethod = foreignType.GetMethod(Method.Add);
-                    var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
-                    var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
+                    UpdateCollection(entity, parameter, exprs, propertyKeyPair, foreignEntity);
 
-                    exprs.AddRange(foreignEntities
-                         .Where(foreign => !member.Contains(foreign)) // better way to check?
-                         .Select(uforeign => Expression.Call(
-                             property, addMethod, Expression.Constant(uforeign))));
+                    continue;
                 }
-                else
-                {
-                    exprs.Add(
-                    Expression.Assign(
-                        Expression.Property(parameter, propertyKeyPair.Key),
-                        Expression.Constant(propertyKeyPair.Value)));
-                }
+
+                exprs.Add(
+                Expression.Assign(
+                    Expression.Property(parameter, propertyKeyPair.Key),
+                    Expression.Constant(propertyKeyPair.Value)));
+            }
 
             exprs.Add(
                 Expression.Assign(
@@ -130,6 +115,36 @@ namespace Rapier.CommandDefinitions
 
             Expression.Lambda<Action<TEntity>>(
                 Expression.Block(exprs), parameter).Compile()(entity);
+        }
+
+        private static void CreateCollection(List<MemberAssignment> exprs, KeyValuePair<string, object> propertyKeyPair, Type foreignEntity)
+        {
+            var foreignCollectionType = typeof(List<>).MakeGenericType(foreignEntity);
+            var addMethod = foreignCollectionType.GetMethod(Method.Add);
+            var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
+
+            var list = Expression.ListInit(
+                Expression.New(foreignCollectionType),
+                foreignEntities.Select(entity => Expression.ElementInit(
+                    addMethod, Expression.Constant(entity))));
+
+            exprs.Add(Expression.Bind(typeof(TEntity).GetMember(propertyKeyPair.Key)[0], list));
+        }
+
+        private static void UpdateCollection(TEntity entity, ParameterExpression parameter, List<Expression> exprs, 
+            KeyValuePair<string, object> propertyKeyPair, Type foreignEntity)
+        {
+            var foreignType = typeof(ICollection<>).MakeGenericType(foreignEntity);
+            var addMethod = foreignType.GetMethod(Method.Add);
+            var foreignEntities = propertyKeyPair.Value as IEnumerable<object>;
+
+            var member = typeof(TEntity).GetProperty(propertyKeyPair.Key).GetValue(entity) as IEnumerable<object>;
+            var property = Expression.Property(parameter, propertyKeyPair.Key);
+
+            exprs.AddRange(foreignEntities
+                 .Where(foreign => !member.Contains(foreign)) // better way to check?
+                 .Select(uforeign => Expression.Call(
+                     property, addMethod, Expression.Constant(uforeign))));
         }
 
         private IDictionary<string, object> UpdatePropertyCollection(
